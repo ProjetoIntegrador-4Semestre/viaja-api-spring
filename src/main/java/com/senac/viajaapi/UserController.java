@@ -1,0 +1,98 @@
+package com.senac.viajaapi;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.IanaLinkRelations;
+import org.springframework.hateoas.PagedModel;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+
+@RestController
+@RequestMapping("/users")
+@Tag(name = "users", description = "CRUD de usuarios: listagem paginada, consulta por id, criacao, atualizacao e exclusao.")
+public class UserController {
+
+    private final UserRepository repository;
+    private final UserModelAssembler assembler;
+    private final org.springframework.data.web.PagedResourcesAssembler<User> pagedResourcesAssembler;
+
+    public UserController(UserRepository repository, UserModelAssembler assembler,
+            org.springframework.data.web.PagedResourcesAssembler<User> pagedResourcesAssembler) {
+        this.repository = repository;
+        this.assembler = assembler;
+        this.pagedResourcesAssembler = pagedResourcesAssembler;
+    }
+
+    @Operation(summary = "Listar usuarios", description = "Retorna lista paginada de todos os usuarios cadastrados no sistema. Use page, size e sort para controlar a paginacao e ordenacao.")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Lista paginada de usuarios com links HATEOAS")
+    @GetMapping
+    public ResponseEntity<PagedModel<EntityModel<User>>> getAllUsers(
+            @org.springdoc.core.annotations.ParameterObject @PageableDefault(size = 10, page = 0, sort = "id") Pageable pageable) {
+        Page<User> page = repository.findAll(pageable);
+        PagedModel<EntityModel<User>> pagedModel = pagedResourcesAssembler.toModel(page, assembler);
+        return ResponseEntity.ok(pagedModel);
+    }
+
+    @Operation(summary = "Buscar usuario por id", description = "Retorna um usuario especificado pelo seu identificador, incluindo links de navegacao HATEOAS.")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Usuario encontrado")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Usuario nao encontrado para o id informado")
+    @GetMapping("/{id}")
+    public EntityModel<User> getUserById(@Parameter(description = "Identificador numerico do usuario") @PathVariable Long id) {
+        User user = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Usuario nao encontrado com ID: " + id));
+        return assembler.toModel(user);
+    }
+
+    @Operation(summary = "Criar usuario", description = "Cadastra um novo usuario no sistema com nome, email, modo padrao e datas de criacao e atualizacao.")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Usuario criado com sucesso")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Dados invalidos: campos obrigatorios ausentes")
+    @PostMapping
+    public ResponseEntity<EntityModel<User>> newUser(@RequestBody @Valid User newUser) {
+        User saved = repository.save(newUser);
+        EntityModel<User> entityModel = assembler.toModel(saved);
+        return ResponseEntity.created(entityModel.getRequiredLink(IanaLinkRelations.SELF).toUri()).body(entityModel);
+    }
+
+    @Operation(summary = "Atualizar usuario", description = "Atualiza os campos de um usuario existente: nome, email e modo padrao (turismo ou trabalho).")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Usuario atualizado com sucesso")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Usuario nao encontrado para o id informado")
+    @PutMapping("/{id}")
+    public ResponseEntity<EntityModel<User>> updateUser(
+            @Parameter(description = "Identificador numerico do usuario a ser atualizado") @PathVariable Long id,
+            @RequestBody @Valid User newUser) {
+        User user = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Usuario nao encontrado com ID: " + id));
+        user.setName(newUser.getName());
+        user.setEmail(newUser.getEmail());
+        user.setPhone(newUser.getPhone());
+        user.setAddress(newUser.getAddress());
+        user.setDefaultMode(newUser.getDefaultMode());
+        return ResponseEntity.ok(assembler.toModel(repository.save(user)));
+    }
+
+    @Operation(summary = "Excluir usuario", description = "Remove definitivamente um usuario do sistema pelo seu identificador.")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "204", description = "Usuario excluído com sucesso")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Usuario nao encontrado para o id informado")
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteUser(@Parameter(description = "Identificador numerico do usuario a ser excluído") @PathVariable Long id) {
+        if (!repository.existsById(id)) {
+            return ResponseEntity.notFound().build();
+        }
+        repository.deleteById(id);
+        return ResponseEntity.noContent().build();
+    }
+}
