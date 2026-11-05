@@ -45,3 +45,9 @@ The recovery scope, checkpoints and verified Android baseline are tracked in the
 ## Saved places
 
 All `/users/{userId}/saved-locals` operations require that the JWT user owns the path's userId; another user's identifier returns 403. Lists retain HAL pagination with `savedLocals` in `_embedded`. Save with `POST` and a body containing `localId`; the server assigns the saved-record ID, owner and timestamp. Creation returns 201 with a resolvable Location. Missing places and duplicate saves return 400. `GET` and `DELETE` on `/{localId}` use the place's identifier; a missing association returns 404, and successful removal returns 204. The smoke test creates and removes a demonstration association and checks that the original seed association remains intact.
+
+## Trips and itinerary
+
+Trip collections are paginated and scoped to the JWT user. Read/write/delete operations reject another user's trip or itinerary with 403. Create with `name`, `cityId`, and mode `tourism` or `work`; ownership is derived from the JWT, and a supplied conflicting userId is rejected. Dates may be omitted; if endDate is present it requires startDate and cannot precede it. Budget is a nonnegative integer amount in cents, limited to 2147483647. Creation returns the Trip entity with HATEOAS links, 201 and Location. Updates replace optional dates/budget and may set planned/active/completed/cancelled status.
+
+Itinerary entries use tripId/localId and positive day/orderIndex. The place must belong to the trip's city; duplicate association is rejected. Per-trip lists are sorted by day and order. Trip deletion removes stops, notes, memos and trip media in the same transaction. These ownership checks do not yet cover the separate note/memo/user controllers.

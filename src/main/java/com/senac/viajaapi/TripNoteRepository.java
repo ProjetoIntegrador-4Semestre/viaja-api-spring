@@ -9,4 +9,5 @@ import org.springframework.stereotype.Repository;
 public interface TripNoteRepository extends JpaRepository<TripNote, Long> {
 
     Page<TripNote> findByTripId(Long tripId, Pageable pageable);
+    void deleteByTripId(Long tripId);
 }

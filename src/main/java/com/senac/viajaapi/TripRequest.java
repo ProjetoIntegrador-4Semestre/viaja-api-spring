@@ -2,6 +2,7 @@ package com.senac.viajaapi;
 
 public class TripRequest {
 
+    private Long cityId;
     private Long userId;
     private String name;
     private String mode;
@@ -24,6 +25,8 @@ public class TripRequest {
         this.status = status;
     }
 
+    public Long getCityId() { return cityId; }
+    public void setCityId(Long cityId) { this.cityId = cityId; }
     public Long getUserId() { return userId; }
     public void setUserId(Long userId) { this.userId = userId; }
     public String getName() { return name; }

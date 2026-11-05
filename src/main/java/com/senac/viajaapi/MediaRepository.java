@@ -9,4 +9,5 @@ import java.util.List;
 public interface MediaRepository extends JpaRepository<Media, Long> {
 
     List<Media> findByEntityTypeAndEntityId(String entityType, Long entityId);
+    void deleteByEntityTypeAndEntityId(String entityType, Long entityId);
 }

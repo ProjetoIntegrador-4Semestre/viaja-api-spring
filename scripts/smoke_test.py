@@ -124,6 +124,57 @@ def main():
     assert status == 200
     print("PASS: saved ownership, creation, links, duplicate rejection, pagination and deletion")
 
+    status, _, body = request(base_url, "/trips", token=token)
+    assert status == 200
+    assert all(trip["userId"] == 1 for trip in json.loads(body)["_embedded"]["trips"])
+    trip_body = {"name": "Smoke trip", "cityId": 1, "mode": "tourism"}
+    for method, path, payload in [
+        ("GET", "/trips/2", None), ("GET", "/trips/user/2", None),
+        ("POST", "/trips", {**trip_body, "userId": 2}),
+        ("PUT", "/trips/2", trip_body), ("DELETE", "/trips/2", None),
+        ("GET", "/trip-locals/trip/2", None), ("GET", "/trip-locals/2/3", None),
+        ("POST", "/trip-locals", {"tripId": 2, "localId": 3, "day": 1, "orderIndex": 1}),
+        ("PUT", "/trip-locals/2/3", {"day": 1, "orderIndex": 1}),
+        ("DELETE", "/trip-locals/2/3", None),
+    ]:
+        status, _, _ = request(base_url, path, payload, token, method)
+        assert status == 403, f"Cross-user {method} {path} returned {status}"
+    for invalid in [{"cityId": 999999}, {"name": " "}, {"mode": "invalid"},
+                    {"startDate": "invalid"}, {"endDate": "2026-12-01"},
+                    {"budgetCents": -1}, {"budgetCents": 2147483648}]:
+        status, _, _ = request(base_url, "/trips", {**trip_body, **invalid}, token)
+        assert status == 400, f"Invalid trip {invalid} returned {status}"
+    status, headers, body = request(base_url, "/trips", trip_body, token)
+    assert status == 201
+    trip = json.loads(body)
+    trip_id = str(trip["id"])
+    assert trip["userId"] == 1 and trip["cityId"] == 1 and trip["startDate"] is None
+    assert headers["Location"].endswith("/trips/" + trip_id)
+    status, _, _ = request(base_url, "/trips/" + trip_id, {**trip_body, "name": "Updated trip", "budgetCents": 12345}, token, "PUT")
+    assert status == 200
+    stop = {"tripId": int(trip_id), "localId": 1, "day": 1, "orderIndex": 1}
+    status, _, _ = request(base_url, "/trip-locals", {**stop, "localId": 3}, token)
+    assert status == 400
+    status, _, _ = request(base_url, "/trip-locals", {**stop, "day": 0}, token)
+    assert status == 400
+    status, _, _ = request(base_url, "/trip-locals", stop, token)
+    assert status == 201
+    status, _, _ = request(base_url, "/trip-locals", stop, token)
+    assert status == 400
+    status, _, body = request(base_url, "/trip-locals/trip/" + trip_id, token=token)
+    assert status == 200 and json.loads(body)[0]["localId"] == 1
+    status, _, _ = request(base_url, "/trip-locals/" + trip_id + "/1", {"day": 2, "orderIndex": 1}, token, "PUT")
+    assert status == 200
+    status, _, _ = request(base_url, "/trip-locals/" + trip_id + "/1", token=token, method="DELETE")
+    assert status == 204
+    status, _, _ = request(base_url, "/trip-locals", stop, token)
+    assert status == 201
+    status, _, _ = request(base_url, "/trips/" + trip_id, token=token, method="DELETE")
+    assert status == 204
+    status, _, _ = request(base_url, "/trips/" + trip_id, token=token)
+    assert status == 404
+    print("PASS: trip ownership, validation, creation/update and itinerary mutations")
+
 
 if __name__ == "__main__":
     main()

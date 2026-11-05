@@ -12,6 +12,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
 @Table(name = "trips")
+@org.springframework.hateoas.server.core.Relation(collectionRelation = "trips")
 @Entity
 public class Trip {
 
