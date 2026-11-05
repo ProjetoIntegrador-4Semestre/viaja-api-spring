@@ -14,6 +14,7 @@ public class SavedLocalModelAssembler implements RepresentationModelAssembler<Sa
     @Override
     public EntityModel<SavedLocal> toModel(SavedLocal savedLocal) {
         return EntityModel.of(savedLocal,
+                linkTo(methodOn(SavedLocalController.class).getSavedLocal(savedLocal.getUserId(), savedLocal.getLocalId())).withSelfRel(),
                 linkTo(methodOn(SavedLocalController.class).getSavedLocalsByUser(savedLocal.getUserId(), Pageable.unpaged())).withRel("savedLocals"));
     }
 }

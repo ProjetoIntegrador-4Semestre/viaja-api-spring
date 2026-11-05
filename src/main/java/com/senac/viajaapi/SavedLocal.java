@@ -12,6 +12,7 @@ import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 
 @Table(name = "saved_locals", uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "local_id"}))
+@org.springframework.hateoas.server.core.Relation(collectionRelation = "savedLocals")
 @Entity
 public class SavedLocal {
 

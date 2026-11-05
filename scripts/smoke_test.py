@@ -4,7 +4,7 @@ from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
 
-def request(base_url, path, body=None, token=None):
+def request(base_url, path, body=None, token=None, method=None):
     headers = {"Accept": "application/json"}
     data = None
     if body is not None:
@@ -13,7 +13,7 @@ def request(base_url, path, body=None, token=None):
     if token:
         headers["Authorization"] = token
     try:
-        with urlopen(Request(base_url + path, data=data, headers=headers), timeout=15) as response:
+        with urlopen(Request(base_url + path, data=data, headers=headers, method=method), timeout=15) as response:
             return response.status, response.headers, response.read()
     except HTTPError as error:
         return error.code, error.headers, error.read()
@@ -87,6 +87,42 @@ def main():
     status, _, _ = request(base_url, "/trips", token=token)
     assert status == 200
     print("PASS: seeded user can authenticate and access trips")
+
+    for method, path, body in [
+        ("GET", "/users/2/saved-locals", None),
+        ("GET", "/users/2/saved-locals/3", None),
+        ("POST", "/users/2/saved-locals", {"localId": 3}),
+        ("DELETE", "/users/2/saved-locals/3", None),
+    ]:
+        status, _, _ = request(base_url, path, body, token, method)
+        assert status == 403, f"Cross-user {method} returned {status}"
+    status, _, _ = request(base_url, "/users/1/saved-locals", {"localId": 999999}, token)
+    assert status == 400
+    status, headers, body = request(base_url, "/users/1/saved-locals", {"id": 1, "userId": 2, "localId": 3}, token)
+    assert status == 201
+    saved = json.loads(body)
+    assert saved["userId"] == 1 and saved["localId"] == 3 and saved["id"] != 1
+    assert headers["Location"].endswith("/users/1/saved-locals/3")
+    status, _, _ = request(base_url, "/users/1/saved-locals/3", token=token)
+    assert status == 200
+    status, _, _ = request(base_url, "/users/1/saved-locals", {"localId": 3}, token)
+    assert status == 400
+    status, _, body = request(base_url, "/users/1/saved-locals?size=1", token=token)
+    assert status == 200
+    first_page = json.loads(body)
+    assert first_page["page"]["totalElements"] == 2
+    assert len(first_page["_embedded"]["savedLocals"]) == 1
+    status, _, body = request(base_url, "/users/1/saved-locals?size=1&page=1", token=token)
+    assert status == 200
+    second_page = json.loads(body)
+    assert second_page["_embedded"]["savedLocals"][0]["localId"] == 3
+    status, _, body = request(base_url, "/users/1/saved-locals/3", token=token, method="DELETE")
+    assert status == 204 and not body
+    status, _, _ = request(base_url, "/users/1/saved-locals/3", token=token)
+    assert status == 404
+    status, _, _ = request(base_url, "/users/1/saved-locals/1", token=token)
+    assert status == 200
+    print("PASS: saved ownership, creation, links, duplicate rejection, pagination and deletion")
 
 
 if __name__ == "__main__":

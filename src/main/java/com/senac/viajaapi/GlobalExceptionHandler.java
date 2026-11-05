@@ -15,6 +15,12 @@ public class GlobalExceptionHandler {
         return "Invalid credentials";
     }
 
+    @ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    String forbidden(org.springframework.security.access.AccessDeniedException ex) {
+        return "Access denied";
+    }
+
     @ExceptionHandler(RuntimeException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     String notFound(RuntimeException ex) {

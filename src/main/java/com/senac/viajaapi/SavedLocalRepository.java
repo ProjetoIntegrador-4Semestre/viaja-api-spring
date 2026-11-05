@@ -12,5 +12,8 @@ public interface SavedLocalRepository extends JpaRepository<SavedLocal, Long> {
 
     boolean existsByUserIdAndLocalId(Long userId, Long localId);
 
+    java.util.Optional<SavedLocal> findByUserIdAndLocalId(Long userId, Long localId);
+
+    @org.springframework.transaction.annotation.Transactional
     void deleteByUserIdAndLocalId(Long userId, Long localId);
 }

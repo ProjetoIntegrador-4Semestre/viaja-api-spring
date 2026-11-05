@@ -41,3 +41,7 @@ Android debug builds can use `-PapiBaseUrl=http://10.0.2.2:18080/` to reach the 
 The general RuntimeException handler still maps exceptions to 404. AuthenticationException is handled separately as 401; remaining error cases require a resource-by-resource audit.
 
 The recovery scope, checkpoints and verified Android baseline are tracked in the Android repository's `docs/recovery-plan.md`.
+
+## Saved places
+
+All `/users/{userId}/saved-locals` operations require that the JWT user owns the path's userId; another user's identifier returns 403. Lists retain HAL pagination with `savedLocals` in `_embedded`. Save with `POST` and a body containing `localId`; the server assigns the saved-record ID, owner and timestamp. Creation returns 201 with a resolvable Location. Missing places and duplicate saves return 400. `GET` and `DELETE` on `/{localId}` use the place's identifier; a missing association returns 404, and successful removal returns 204. The smoke test creates and removes a demonstration association and checks that the original seed association remains intact.

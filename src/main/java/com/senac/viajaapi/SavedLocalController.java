@@ -26,12 +26,16 @@ import jakarta.validation.Valid;
 public class SavedLocalController {
 
     private final SavedLocalRepository repository;
+    private final UserRepository userRepository;
+    private final LocalRepository localRepository;
     private final SavedLocalModelAssembler assembler;
     private final org.springframework.data.web.PagedResourcesAssembler<SavedLocal> pagedResourcesAssembler;
 
-    public SavedLocalController(SavedLocalRepository repository, SavedLocalModelAssembler assembler,
+    public SavedLocalController(SavedLocalRepository repository, UserRepository userRepository, LocalRepository localRepository, SavedLocalModelAssembler assembler,
             org.springframework.data.web.PagedResourcesAssembler<SavedLocal> pagedResourcesAssembler) {
         this.repository = repository;
+        this.userRepository = userRepository;
+        this.localRepository = localRepository;
         this.assembler = assembler;
         this.pagedResourcesAssembler = pagedResourcesAssembler;
     }
@@ -42,6 +46,7 @@ public class SavedLocalController {
     public ResponseEntity<PagedModel<EntityModel<SavedLocal>>> getSavedLocalsByUser(
             @Parameter(description = "Identificador do usuario") @PathVariable Long userId,
             @org.springdoc.core.annotations.ParameterObject @PageableDefault(size = 10, page = 0, sort = "id") Pageable pageable) {
+        requireOwner(userId);
         Page<SavedLocal> page = repository.findByUserId(userId, pageable);
         return ResponseEntity.ok(pagedResourcesAssembler.toModel(page, assembler));
     }
@@ -53,10 +58,15 @@ public class SavedLocalController {
     public ResponseEntity<?> saveLocal(
             @Parameter(description = "Identificador do usuario") @PathVariable Long userId,
             @RequestBody @Valid SavedLocal newSavedLocal) {
+        requireOwner(userId);
+        if (newSavedLocal.getLocalId() == null || !localRepository.existsById(newSavedLocal.getLocalId())) {
+            throw new IllegalArgumentException("Place does not exist");
+        }
         if (repository.existsByUserIdAndLocalId(userId, newSavedLocal.getLocalId())) {
             return ResponseEntity.badRequest()
                     .body(new ApiResponse("erro", "Local ja salvo pelo usuario"));
         }
+        newSavedLocal.setId(null);
         newSavedLocal.setUserId(userId);
         newSavedLocal.setCreatedAt(java.time.LocalDateTime.now());
         SavedLocal saved = repository.save(newSavedLocal);
@@ -70,10 +80,29 @@ public class SavedLocalController {
     public ResponseEntity<?> unsaveLocal(
             @Parameter(description = "Identificador do usuario") @PathVariable Long userId,
             @Parameter(description = "Identificador do local") @PathVariable Long localId) {
+        requireOwner(userId);
         if (!repository.existsByUserIdAndLocalId(userId, localId)) {
             return ResponseEntity.notFound().build();
         }
         repository.deleteByUserIdAndLocalId(userId, localId);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/{localId}")
+    @Operation(summary = "Buscar um local salvo do usuario")
+    public EntityModel<SavedLocal> getSavedLocal(@PathVariable Long userId, @PathVariable Long localId) {
+        requireOwner(userId);
+        SavedLocal saved = repository.findByUserIdAndLocalId(userId, localId)
+                .orElseThrow(() -> new RuntimeException("Saved place does not exist"));
+        return assembler.toModel(saved);
+    }
+
+    private void requireOwner(Long userId) {
+        String email = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new org.springframework.security.access.AccessDeniedException("Access denied"));
+        if (!user.getId().equals(userId)) {
+            throw new org.springframework.security.access.AccessDeniedException("Access denied");
+        }
     }
 }
