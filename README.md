@@ -32,9 +32,11 @@ The verification checks seeded city pagination and its next-page link, a missing
 
 Login currently accepts `email` and `senha`. The demonstration account is `rafael@email.com` with password `senha123`. Successful login returns the JWT in the `Authorization` response header; send that value in subsequent protected requests.
 
-## Current integration limitations
+## Place contract
 
-`GET /places/search` returns a simple list of PlaceResponse objects. `GET /places/{id}` returns a Local entity with HATEOAS links. These payloads need reconciliation before replacing Android's mock-based place flow. Search currently matches place name/address, rather than city identity.
+`GET /places/search?q=Rio` searches place names, addresses and city names and returns a simple list. `GET /places/{id}` returns the same fields plus HATEOAS links. Identifiers are strings in this read contract. `price` is an integer amount in cents, not a price level; `description` is included. The paginated `/places` collection and write endpoints retain the Local entity contract.
+
+Android debug builds can use `-PapiBaseUrl=http://10.0.2.2:18080/` to reach the local API from the emulator. The hosted API must receive this contract update before the default hosted Android configuration is used.
 
 The general RuntimeException handler still maps exceptions to 404. AuthenticationException is handled separately as 401; remaining error cases require a resource-by-resource audit.
 

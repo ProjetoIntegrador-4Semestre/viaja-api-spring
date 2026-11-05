@@ -49,6 +49,24 @@ def main():
     assert len(json.loads(body)) == 3
     print("PASS: seeded places are searchable")
 
+    status, _, body = request(base_url, "/places/search?q=Rio")
+    assert status == 200
+    places = json.loads(body)
+    assert len(places) == 2
+    for place in places:
+        status, _, body = request(base_url, "/places/" + place["id"])
+        assert status == 200
+        detail = json.loads(body)
+        assert all(detail[key] == value for key, value in place.items())
+        assert "price" in detail and "priceLevel" not in detail
+        assert detail["description"]
+        assert "self" in detail["_links"]
+    status, _, body = request(base_url, "/places/search?q=not-a-place")
+    assert status == 200 and json.loads(body) == []
+    status, _, _ = request(base_url, "/places/999999")
+    assert status == 404
+    print("PASS: city search, consistent place details, empty search and missing place")
+
     status, _, body = request(base_url, "/v3/api-docs")
     assert status == 200
     assert "/auth/login" in json.loads(body)["paths"]

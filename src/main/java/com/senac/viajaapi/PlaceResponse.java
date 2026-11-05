@@ -14,7 +14,9 @@ public class PlaceResponse {
     private List<String> categories;
     private Float rating;
     private Integer ratingCount;
-    private Integer priceLevel;
+    @io.swagger.v3.oas.annotations.media.Schema(description = "Price in cents", example = "15000")
+    private Integer price;
+    private String description;
     private String priceHint;
     private String photoUrl;
     private Boolean openNow;
@@ -25,7 +27,7 @@ public class PlaceResponse {
 
     public PlaceResponse(String id, String source, String sourceId, String name, String address,
             Double lat, Double lng, List<String> categories, Float rating, Integer ratingCount,
-            Integer priceLevel, String priceHint, String photoUrl, Boolean openNow, List<String> tags) {
+            Integer price, String priceHint, String photoUrl, Boolean openNow, List<String> tags) {
         this.id = id;
         this.source = source;
         this.sourceId = sourceId;
@@ -36,7 +38,7 @@ public class PlaceResponse {
         this.categories = categories;
         this.rating = rating;
         this.ratingCount = ratingCount;
-        this.priceLevel = priceLevel;
+        this.price = price;
         this.priceHint = priceHint;
         this.photoUrl = photoUrl;
         this.openNow = openNow;
@@ -63,8 +65,10 @@ public class PlaceResponse {
     public void setRating(Float rating) { this.rating = rating; }
     public Integer getRatingCount() { return ratingCount; }
     public void setRatingCount(Integer ratingCount) { this.ratingCount = ratingCount; }
-    public Integer getPriceLevel() { return priceLevel; }
-    public void setPriceLevel(Integer priceLevel) { this.priceLevel = priceLevel; }
+    public Integer getPrice() { return price; }
+    public void setPrice(Integer price) { this.price = price; }
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
     public String getPriceHint() { return priceHint; }
     public void setPriceHint(String priceHint) { this.priceHint = priceHint; }
     public String getPhotoUrl() { return photoUrl; }

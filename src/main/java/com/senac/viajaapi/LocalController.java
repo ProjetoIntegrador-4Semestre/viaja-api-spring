@@ -2,6 +2,7 @@ package com.senac.viajaapi;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
@@ -35,18 +36,20 @@ import jakarta.validation.Valid;
 public class LocalController {
 
     private final LocalRepository repository;
+    private final CityRepository cityRepository;
     private final LocalModelAssembler assembler;
     private final org.springframework.data.web.PagedResourcesAssembler<Local> pagedResourcesAssembler;
 
-    public LocalController(LocalRepository repository, LocalModelAssembler assembler,
+    public LocalController(LocalRepository repository, CityRepository cityRepository, LocalModelAssembler assembler,
             org.springframework.data.web.PagedResourcesAssembler<Local> pagedResourcesAssembler) {
         this.repository = repository;
+        this.cityRepository = cityRepository;
         this.assembler = assembler;
         this.pagedResourcesAssembler = pagedResourcesAssembler;
     }
 
     private PlaceResponse toPlaceResponse(Local local) {
-        return new PlaceResponse(
+        PlaceResponse response = new PlaceResponse(
                 String.valueOf(local.getId()),
                 local.getSource(),
                 local.getSourceId(),
@@ -54,7 +57,7 @@ public class LocalController {
                 local.getAddress(),
                 local.getLat() == null ? null : local.getLat().doubleValue(),
                 local.getLng() == null ? null : local.getLng().doubleValue(),
-                List.of(local.getType()),
+                local.getType() == null ? List.of() : List.of(local.getType()),
                 local.getRating(),
                 local.getRatingCount(),
                 local.getPrice(),
@@ -63,9 +66,11 @@ public class LocalController {
                 null,
                 new ArrayList<>()
         );
+        response.setDescription(local.getDescription());
+        return response;
     }
 
-    @Operation(summary = "Buscar lugares por texto", description = "Busca lugares pelo nome ou endereco, retornando uma lista simples (nao paginada) compatível com consumidores REST. Utiliza filtro contendo (contains) ignorando maiusculas/minusculas.")
+    @Operation(summary = "Buscar lugares por texto", description = "Busca lugares pelo nome, endereco ou cidade, retornando uma lista simples (nao paginada) compatível com consumidores REST. Utiliza filtro contendo (contains) ignorando maiusculas/minusculas.")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Lista de lugares encontrados")
     @GetMapping("/search")
     public List<PlaceResponse> searchPlaces(@Parameter(description = "Texto livre para busca no nome ou endereço do lugar") @RequestParam(required = false) String q) {
@@ -73,9 +78,14 @@ public class LocalController {
         if (q == null || q.isBlank()) {
             locais = repository.findAll();
         } else {
+            String term = q.trim().toLowerCase(Locale.ROOT);
+            List<Long> cityIds = cityRepository.findAll().stream()
+                    .filter(city -> city.getName().toLowerCase(Locale.ROOT).contains(term))
+                    .map(City::getId).toList();
             locais = repository.findAll().stream()
-                    .filter(l -> l.getName().toLowerCase().contains(q.toLowerCase())
-                            || (l.getAddress() != null && l.getAddress().toLowerCase().contains(q.toLowerCase())))
+                    .filter(l -> l.getName().toLowerCase(Locale.ROOT).contains(term)
+                            || (l.getAddress() != null && l.getAddress().toLowerCase(Locale.ROOT).contains(term))
+                            || cityIds.contains(l.getCityId()))
                     .collect(Collectors.toList());
         }
         return locais.stream().map(this::toPlaceResponse).collect(Collectors.toList());
@@ -95,10 +105,10 @@ public class LocalController {
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Lugar encontrado")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Lugar nao encontrado para o id informado")
     @GetMapping("/{id}")
-    public EntityModel<Local> getPlaceById(@Parameter(description = "Identificador numerico do lugar") @PathVariable Long id) {
+    public EntityModel<PlaceResponse> getPlaceById(@Parameter(description = "Identificador numerico do lugar") @PathVariable Long id) {
         Local local = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Lugar nao encontrado com ID: " + id));
-        return assembler.toModel(local);
+        return EntityModel.of(toPlaceResponse(local), assembler.toModel(local).getLinks());
     }
 
     @Operation(summary = "Criar lugar", description = "Cadastra um novo lugar no sistema, vinculando a uma cidade existente e definindo categoria, preco, avaliacao e fonte de dados.")
