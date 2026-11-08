@@ -21,6 +21,12 @@ public class GlobalExceptionHandler {
         return "Access denied";
     }
 
+    @ExceptionHandler(org.springframework.web.HttpRequestMethodNotSupportedException.class)
+    org.springframework.http.ResponseEntity<String> methodNotAllowed(org.springframework.web.HttpRequestMethodNotSupportedException ex) {
+        return org.springframework.http.ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED)
+                .headers(ex.getHeaders()).body("Method not allowed");
+    }
+
     @ExceptionHandler(RuntimeException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     String notFound(RuntimeException ex) {

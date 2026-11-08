@@ -175,6 +175,21 @@ def main():
     assert status == 404
     print("PASS: trip ownership, validation, creation/update and itinerary mutations")
 
+    status, _, body = request(base_url, "/users", token=token)
+    assert status == 200
+    users = json.loads(body)
+    assert users["page"]["totalElements"] == 1
+    assert "passwordHash" not in body.decode()
+    status, _, body = request(base_url, "/users/1", token=token)
+    assert status == 200 and json.loads(body)["email"] == "rafael@email.com"
+    assert "passwordHash" not in body.decode()
+    for method, payload in [("GET", None), ("PUT", {"name": "Unauthorized"}), ("DELETE", None)]:
+        status, _, _ = request(base_url, "/users/2", payload, token, method)
+        assert status == 403
+    status, headers, _ = request(base_url, "/users", {"id": 2, "name": "Unauthorized"}, token)
+    assert status == 405 and "GET" in headers.get("Allow", "")
+    print("PASS: account privacy, password hash omission and cross-user rejection")
+
 
 if __name__ == "__main__":
     main()

@@ -34,7 +34,7 @@ python3 scripts/smoke_test.py
 
 `--base-url` altera o endereço consultado. A verificação espera contagens e registros iniciais; ela cria e remove vínculos/viagens de demonstração. Não executar em um banco de usuários reais. O script não imprime JWTs.
 
-São nove grupos de assertivas: paginação/seed de cidades; 404 de cidade; busca de lugares; consistência busca/detalhe; OpenAPI; login inválido; login válido/acesso autenticado; salvos; viagens/paradas. Incluem testes de acesso cruzado nos recursos já protegidos. Não cobrem todo CRUD, todas as relações, todos os controladores nem o Android. `mvnw verify` não significa que existe uma suíte Java completa.
+São dez grupos de assertivas: paginação/seed de cidades; 404 de cidade; busca de lugares; consistência busca/detalhe; OpenAPI; login inválido; login válido/acesso autenticado; salvos; viagens/paradas; privacidade da conta. Incluem testes de acesso cruzado nos recursos já protegidos. Não cobrem todo CRUD, todas as relações, todos os controladores nem o Android. `mvnw verify` não significa que existe uma suíte Java completa.
 
 ## Contratos usados pelo Android
 
@@ -43,6 +43,7 @@ Não existe prefixo `/api` nos caminhos abaixo. Swagger precisa de revisão de e
 | Recurso | Contrato relevante |
 | --- | --- |
 | Login | `POST /auth/login`, corpo `email`/`senha`; JWT em `Authorization` no header da resposta, usuário no JSON |
+| Conta própria | `GET /users` lista apenas a conta autenticada; `GET/PUT/DELETE /users/{id}` conferem proprietário e não expõem hash; `POST /users` não está disponível |
 | Cadastro | `POST /auth/signup`, corpo `name`/`email`/`senha` |
 | Cidades | `GET /cities`, HAL, coleção `_embedded.cityList` |
 | Lugares | `GET /places/search?q=` retorna lista simples; `GET /places/{id}` expõe os mesmos campos mais links |
@@ -54,7 +55,7 @@ A conta local de demonstração é `rafael@email.com`, senha `senha123`. Esses d
 
 Na leitura de lugares, `id` é textual e `price` é inteiro em centavos; descrição está incluída. A coleção paginada e a escrita `/places` ainda usam Local, um contrato diferente. Criação de viagem recebe nome/cidade/modo, datas e orçamento opcionais; proprietário vem do JWT. Sucesso retorna 201/Location. Excluir retorna 204 sem corpo. Salvos duplicados e lugares inexistentes são rejeitados com 400; associações ausentes retornam 404.
 
-Salvos, viagens e paradas conferem proprietário. Isso não significa autorização completa dos demais recursos. Exclusão de viagem remove memos, notas, paradas e mídia de viagem na mesma transação; a exclusão isolada de uma parada com memos ainda precisa de tratamento.
+Salvos, viagens, paradas e conta própria conferem proprietário. Isso não significa autorização completa dos demais recursos. Exclusão de viagem remove memos, notas, paradas e mídia de viagem na mesma transação; a exclusão isolada de uma parada com memos ainda precisa de tratamento.
 
 ## Android local e hospedagem
 
@@ -70,6 +71,6 @@ No repositório Android, compilar debug com `-PapiBaseUrl=http://127.0.0.1:18080
 
 Stripe test Checkout/webhooks é direção confirmada, não integração existente. Planos, quotas e política de acesso ficam na referência de produto. O CRUD atual de Subscription não pode se tornar autoridade para conceder Premium; faltam persistência durável, identificação do cliente/assinatura e controle de eventos. Não usar dados fictícios de assinatura como confirmação Stripe.
 
-O estado da implementação registra exposição de usuário/hash, acesso cruzado em outros recursos, escrita pública no catálogo e problemas de JWT/erros. Fechar essas falhas antes de conectar um webhook público ou apresentar uma aplicação segura. H2 console, segredo padrão e configuração de desenvolvimento não são configuração de produção aprovada.
+A exposição de hash e o acesso cruzado de UserController foram corrigidos. O estado da implementação ainda registra acesso cruzado em outros recursos, escrita pública no catálogo e problemas de JWT/erros. Fechar essas falhas antes de conectar um webhook público ou apresentar uma aplicação segura. H2 console, segredo padrão e configuração de desenvolvimento não são configuração de produção aprovada.
 
 `HELP.md` é template gerado pelo Spring e está ignorado no Git; não contém regras do Viajá. Os documentos antigos de UUID/PostgreSQL/rotas `/api` foram classificados e preservados na revisão documental, não aplicados como migração.
