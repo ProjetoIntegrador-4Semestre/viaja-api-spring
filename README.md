@@ -1,57 +1,75 @@
 # Viajá API
 
-Java/Spring Boot API for the Viajá Android application. The classroom reference is `/Users/rafa/IdeaProjects/corp-financial-api`.
+Backend Java/Spring Boot do Viajá. Mantém o padrão acadêmico de controllers, repositories JPA, assemblers HATEOAS, paginação, Swagger e carga inicial. Referência da disciplina: `/Users/rafa/IdeaProjects/corp-financial-api`.
 
-## Local execution
+## Documentação do projeto
 
-Use Java 17 or newer and the included Maven wrapper:
+Produto, planos e telas: [referência de produto](</Users/rafa/AndroidStudioProjects/Viaja/docs/product-baseline.md>). Estrutura/dados: [arquitetura](</Users/rafa/AndroidStudioProjects/Viaja/docs/architecture.md>). Funcionalidades verificadas e falhas abertas: [estado da implementação](</Users/rafa/AndroidStudioProjects/Viaja/docs/status.md>). O [índice](</Users/rafa/AndroidStudioProjects/Viaja/docs/README.md>) indica o papel de cada arquivo.
+
+Esses caminhos são locais aos checkouts informados pelo responsável. Em outra máquina, consultar os mesmos caminhos `docs/` no repositório Android. Não duplicar neste README o escopo, a matriz de preços ou o planejamento das telas.
+
+## Execução local
+
+Usar JDK compatível com o `pom.xml` (Java 17 ou superior) e o Maven Wrapper:
 
 ```sh
 ./mvnw verify
 java -jar target/api-viaja-0.0.1-SNAPSHOT.jar --server.port=18080
 ```
 
-Stop the running application before rebuilding its executable JAR.
-
-The application starts an in-memory H2 database and LoadDatabase inserts demonstration records. Data is reset when the application restarts. The seed includes three cities, three places and demonstration users. It is not a production persistence configuration.
+Encerrar a aplicação antes de reconstruir o JAR em uso. A porta padrão sem argumento é 8080; os testes desta recuperação usam 18080.
 
 - Swagger UI: `http://localhost:18080/swagger-ui/index.html`
 - OpenAPI: `http://localhost:18080/v3/api-docs`
 
-## Baseline verification
+A configuração atual cria H2 em memória e LoadDatabase insere três usuários, três cidades e três lugares, além de associações de demonstração. Reiniciar apaga as alterações e recria o catálogo. Isso é comportamento atual, não persistência de produção ou de cobrança já resolvida. As URLs ilustrativas de imagens e os dados de exemplo precisam de curadoria antes da apresentação final.
 
-With a fresh local instance running on port 18080:
+## Verificação existente
+
+Com uma instância local recém-iniciada:
 
 ```sh
 python3 scripts/smoke_test.py
 ```
 
-An alternative local address can be provided through `--base-url`. Run this verification against a fresh demonstration database: its assertions expect the initial record counts.
+`--base-url` altera o endereço consultado. A verificação espera contagens e registros iniciais; ela cria e remove vínculos/viagens de demonstração. Não executar em um banco de usuários reais. O script não imprime JWTs.
 
-The verification checks seeded city pagination and its next-page link, a missing city's 404 response, seeded place search, OpenAPI availability, invalid login returning 401, and a seeded user's JWT access to trips. It does not print tokens. These checks do not establish complete CRUD correctness, authorization isolation or Android integration.
+São nove grupos de assertivas: paginação/seed de cidades; 404 de cidade; busca de lugares; consistência busca/detalhe; OpenAPI; login inválido; login válido/acesso autenticado; salvos; viagens/paradas. Incluem testes de acesso cruzado nos recursos já protegidos. Não cobrem todo CRUD, todas as relações, todos os controladores nem o Android. `mvnw verify` não significa que existe uma suíte Java completa.
 
-Login currently accepts `email` and `senha`. The demonstration account is `rafael@email.com` with password `senha123`. Successful login returns the JWT in the `Authorization` response header; send that value in subsequent protected requests.
+## Contratos usados pelo Android
 
-## Place contract
+Não existe prefixo `/api` nos caminhos abaixo. Swagger precisa de revisão de exemplos; o código e a resposta executada prevalecem quando houver divergência.
 
-`GET /places/search?q=Rio` searches place names, addresses and city names and returns a simple list. `GET /places/{id}` returns the same fields plus HATEOAS links. Identifiers are strings in this read contract. `price` is an integer amount in cents, not a price level; `description` is included. The paginated `/places` collection and write endpoints retain the Local entity contract.
+| Recurso | Contrato relevante |
+| --- | --- |
+| Login | `POST /auth/login`, corpo `email`/`senha`; JWT em `Authorization` no header da resposta, usuário no JSON |
+| Cadastro | `POST /auth/signup`, corpo `name`/`email`/`senha` |
+| Cidades | `GET /cities`, HAL, coleção `_embedded.cityList` |
+| Lugares | `GET /places/search?q=` retorna lista simples; `GET /places/{id}` expõe os mesmos campos mais links |
+| Viagens | `GET /trips` e `/trips/user/{userId}`, HAL em `_embedded.trips`; detalhe/criação/edição usam Trip com links |
+| Paradas | `/trip-locals`; lista simples ordenada em `/trip-locals/trip/{tripId}`; detalhe/mutações por viagem/lugar |
+| Salvos | `/users/{userId}/saved-locals`, HAL em `_embedded.savedLocals`; `/{localId}` usa o ID do lugar |
 
-Android debug builds can use `-PapiBaseUrl=http://10.0.2.2:18080/` to reach the local API from the emulator. The hosted API must receive this contract update before the default hosted Android configuration is used.
+A conta local de demonstração é `rafael@email.com`, senha `senha123`. Esses dados pertencem ao seed e não são credenciais de produção. Usar o valor completo `Bearer ...` devolvido pelo login no header das consultas privadas.
 
-The general RuntimeException handler still maps exceptions to 404. AuthenticationException is handled separately as 401; remaining error cases require a resource-by-resource audit.
+Na leitura de lugares, `id` é textual e `price` é inteiro em centavos; descrição está incluída. A coleção paginada e a escrita `/places` ainda usam Local, um contrato diferente. Criação de viagem recebe nome/cidade/modo, datas e orçamento opcionais; proprietário vem do JWT. Sucesso retorna 201/Location. Excluir retorna 204 sem corpo. Salvos duplicados e lugares inexistentes são rejeitados com 400; associações ausentes retornam 404.
 
-The recovery scope, checkpoints and verified Android baseline are tracked in the Android repository's `docs/recovery-plan.md`.
+Salvos, viagens e paradas conferem proprietário. Isso não significa autorização completa dos demais recursos. Exclusão de viagem remove memos, notas, paradas e mídia de viagem na mesma transação; a exclusão isolada de uma parada com memos ainda precisa de tratamento.
 
-## Saved places
+## Android local e hospedagem
 
-All `/users/{userId}/saved-locals` operations require that the JWT user owns the path's userId; another user's identifier returns 403. Lists retain HAL pagination with `savedLocals` in `_embedded`. Save with `POST` and a body containing `localId`; the server assigns the saved-record ID, owner and timestamp. Creation returns 201 with a resolvable Location. Missing places and duplicate saves return 400. `GET` and `DELETE` on `/{localId}` use the place's identifier; a missing association returns 404, and successful removal returns 204. The smoke test creates and removes a demonstration association and checks that the original seed association remains intact.
+O caminho que foi verificado no emulador usa encaminhamento de porta:
 
-## Trips and itinerary
+```sh
+adb reverse tcp:18080 tcp:18080
+```
 
-Trip collections are paginated and scoped to the JWT user. Read/write/delete operations reject another user's trip or itinerary with 403. Create with `name`, `cityId`, and mode `tourism` or `work`; ownership is derived from the JWT, and a supplied conflicting userId is rejected. Dates may be omitted; if endDate is present it requires startDate and cannot precede it. Budget is a nonnegative integer amount in cents, limited to 2147483647. Creation returns the Trip entity with HATEOAS links, 201 and Location. Updates replace optional dates/budget and may set planned/active/completed/cancelled status.
+No repositório Android, compilar debug com `-PapiBaseUrl=http://127.0.0.1:18080/`. Roteamento direto por `10.0.2.2` não foi suficiente na sessão verificada. A API hospedada não recebeu os contratos atuais durante esta recuperação; não confundir execução local com deploy concluído.
 
-Itinerary entries use tripId/localId and positive day/orderIndex. The place must belong to the trip's city; duplicate association is rejected. Per-trip lists are sorted by day and order. Trip deletion removes stops, notes, memos and trip media in the same transaction. These ownership checks do not yet cover the separate note/memo/user controllers.
+## Cobrança e segurança pendentes
 
-## Current billing direction
+Stripe test Checkout/webhooks é direção confirmada, não integração existente. Planos, quotas e política de acesso ficam na referência de produto. O CRUD atual de Subscription não pode se tornar autoridade para conceder Premium; faltam persistência durável, identificação do cliente/assinatura e controle de eventos. Não usar dados fictícios de assinatura como confirmação Stripe.
 
-The owner confirmed Stripe test Checkout and verified webhooks for the APK/emulator delivery. This replaces the historical Premium-flag simulation; it is a planned integration, not existing behavior. Product benefits, BRL 19.90/month pricing hypothesis, UI states and implementation prerequisites are defined in the Android repository's `docs/product-baseline.md`. Current general subscription CRUD is not an entitlement authority and must be restricted before billing is connected. Real charges and Play distribution approval are outside this delivery. Persistent H2 storage is required for billing identifiers and webhook processing records across restarts.
+O estado da implementação registra exposição de usuário/hash, acesso cruzado em outros recursos, escrita pública no catálogo e problemas de JWT/erros. Fechar essas falhas antes de conectar um webhook público ou apresentar uma aplicação segura. H2 console, segredo padrão e configuração de desenvolvimento não são configuração de produção aprovada.
+
+`HELP.md` é template gerado pelo Spring e está ignorado no Git; não contém regras do Viajá. Os documentos antigos de UUID/PostgreSQL/rotas `/api` foram classificados e preservados na revisão documental, não aplicados como migração.
