@@ -178,6 +178,81 @@ def main():
     assert status == 200 and json.loads(body)[0]["localId"] == 1
     status, _, _ = request(base_url, "/trip-locals/" + trip_id + "/1", {"day": 2, "orderIndex": 1}, token, "PUT")
     assert status == 200
+    stop_path = f"/trip-locals/{trip_id}/1"
+    schedule_path = stop_path + "/schedule"
+    status, _, body = request(base_url, stop_path, token=token)
+    assert status == 200 and json.loads(body)["scheduledTime"] is None and not json.loads(body)["completed"]
+    schedule = {"scheduledTime": "09:05", "completed": True}
+    for invalid in ({"scheduledTime": "24:00", "completed": True}, {"scheduledTime": "09:05"}):
+        status, _, _ = request(base_url, schedule_path, invalid, token, "PUT")
+        assert status == 400, status
+    status, _, _ = request(base_url, "/trip-locals/2/3/schedule", schedule, token, "PUT")
+    assert status == 403, status
+    status, _, _ = request(base_url, schedule_path, schedule, method="PUT")
+    assert status == 401, status
+    status, _, body = request(base_url, schedule_path, schedule, token, "PUT")
+    assert status == 200, (status, body)
+    assert json.loads(body)["scheduledTime"] == "09:05" and json.loads(body)["completed"]
+    status, _, _ = request(base_url, stop_path, {"day": 1, "orderIndex": 2}, token, "PUT")
+    assert status == 200
+    status, _, body = request(base_url, stop_path, token=token)
+    assert status == 200 and json.loads(body)["scheduledTime"] == "09:05" and json.loads(body)["completed"]
+    status, _, body = request(base_url, schedule_path, {"completed": False}, token, "PUT")
+    assert status == 200 and json.loads(body)["scheduledTime"] is None and not json.loads(body)["completed"]
+    print("PASS: stop schedule validation, ownership, persistence, legacy update and reopening")
+
+    note_path = f"/trips/{trip_id}/notes"
+    memo_list = f"/trip-memos/trip-locals/{trip_id}/1/memos"
+    status, headers, body = request(base_url, note_path, {"id": 1, "tripId": 2, "note": "Owner note"}, token)
+    assert status == 201, (status, body)
+    note = json.loads(body)
+    note_id = note["id"]
+    assert note_id != 1 and note["tripId"] == int(trip_id)
+    assert headers["Location"].endswith(f"{note_path}/{note_id}")
+    status, _, body = request(base_url, note_path, token=token)
+    assert status == 200
+    note_entries = next(iter(json.loads(body)["_embedded"].values()))
+    assert note_entries[0]["note"] == "Owner note"
+    for method in ("GET", "PUT", "DELETE"):
+        payload = {"note": "Wrong trip"} if method == "PUT" else None
+        status, _, _ = request(base_url, f"/trips/1/notes/{note_id}", payload, token, method)
+        assert status == 404, (method, status)
+
+    status, _, body = request(base_url, "/trip-memos", {**stop, "id": 1, "note": "Owner memo"}, token)
+    assert status == 201, (status, body)
+    memo_id = json.loads(body)["id"]
+    assert memo_id != 1
+    status, _, body = request(base_url, memo_list, token=token)
+    assert status == 200 and json.loads(body)[0]["note"] == "Owner memo"
+    status, headers, _ = request(base_url, "/auth/login", {"email": "maria@email.com", "senha": "senha123"})
+    assert status == 200
+    other_token = headers["Authorization"]
+    for method, path, payload in [
+        ("GET", note_path, None),
+        ("POST", note_path, {"note": "Forbidden"}),
+        ("GET", f"{note_path}/{note_id}", None),
+        ("PUT", f"{note_path}/{note_id}", {"note": "Forbidden"}),
+        ("DELETE", f"{note_path}/{note_id}", None),
+        ("GET", memo_list, None),
+        ("POST", "/trip-memos", {**stop, "note": "Forbidden"}),
+        ("GET", f"/trip-memos/{memo_id}", None),
+        ("PUT", f"/trip-memos/{memo_id}", {"note": "Forbidden"}),
+        ("DELETE", f"/trip-memos/{memo_id}", None),
+    ]:
+        status, _, _ = request(base_url, path, payload, other_token, method)
+        assert status == 403, (method, path, status)
+    status, _, body = request(base_url, "/trip-memos", token=other_token)
+    assert status == 200 and json.loads(body)["page"]["totalElements"] == 0
+    status, _, _ = request(base_url, f"{note_path}/{note_id}", {"note": "Edited"}, token, "PUT")
+    assert status == 200
+    status, _, _ = request(base_url, f"/trip-memos/{memo_id}", {"note": "Edited"}, token, "PUT")
+    assert status == 200
+    status, _, _ = request(base_url, f"{note_path}/{note_id}", token=token, method="DELETE")
+    assert status == 204
+    status, _, _ = request(base_url, f"/trip-memos/{memo_id}", token=token, method="DELETE")
+    assert status == 204
+    print("PASS: note and memo ownership, wrong-trip IDs, scoped lists and protected writes")
+
     status, _, _ = request(base_url, "/trip-locals/" + trip_id + "/1", token=token, method="DELETE")
     assert status == 204
     status, _, _ = request(base_url, "/trip-locals", stop, token)

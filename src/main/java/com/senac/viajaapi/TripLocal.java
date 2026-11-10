@@ -1,6 +1,12 @@
 package com.senac.viajaapi;
 
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+
+import org.hibernate.annotations.DynamicUpdate;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Objects;
 
 import jakarta.persistence.Column;
@@ -8,6 +14,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EmbeddedId;
 
 @Entity
+@DynamicUpdate
 public class TripLocal {
 
     @EmbeddedId
@@ -19,6 +26,11 @@ public class TripLocal {
     private Integer day;
 
     private String note;
+
+    @Column(name = "scheduled_time")
+    private LocalTime scheduledTime;
+
+    private Boolean completed;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
@@ -46,6 +58,15 @@ public class TripLocal {
     public void setDay(Integer day) { this.day = day; }
     public String getNote() { return note; }
     public void setNote(String note) { this.note = note; }
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    @JsonFormat(pattern = "HH:mm")
+    public LocalTime getScheduledTime() { return scheduledTime; }
+    public void setScheduledTime(LocalTime scheduledTime) { this.scheduledTime = scheduledTime; }
+
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    public boolean isCompleted() { return Boolean.TRUE.equals(completed); }
+    public void setCompleted(boolean completed) { this.completed = completed; }
+
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 

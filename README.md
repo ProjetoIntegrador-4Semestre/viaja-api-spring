@@ -49,7 +49,10 @@ Não existe prefixo `/api` nos caminhos abaixo. Swagger precisa de revisão de e
 | Lugares | `GET /places/search?q=` retorna lista simples; `GET /places/{id}` expõe os mesmos campos mais links |
 | Viagens | `GET /trips` e `/trips/user/{userId}`, HAL em `_embedded.trips`; detalhe/criação/edição usam Trip com links |
 | Paradas | `/trip-locals`; lista simples ordenada em `/trip-locals/trip/{tripId}`; detalhe/mutações por viagem/lugar |
+| Notas e memos | `/trips/{tripId}/notes` e `/trip-memos` exigem a conta proprietária. A coleção de memos retorna apenas registros das viagens da conta. |
 | Salvos | `/users/{userId}/saved-locals`, HAL em `_embedded.savedLocals`; `/{localId}` usa o ID do lugar |
+
+Para ajustar o horário ou a conclusão de uma parada, use `PUT /trip-locals/{tripId}/{localId}/schedule` com `{"scheduledTime":"09:30","completed":false}`. O horário é local, no formato de 24 horas `HH:mm`. Envie `null` ou omita o horário para limpá-lo. O campo `completed` é obrigatório nessa rota. Paradas anteriores são lidas com horário ausente e como pendentes. O PUT de dia, ordem e nota preserva esses dois campos.
 
 A conta local de demonstração é `rafael@email.com`, senha `senha123`.
 
@@ -63,7 +66,7 @@ O login retorna 200. Use o valor completo `Bearer ...` do header `Authorization`
 
 Na leitura de lugares, `id` é textual e `price` é inteiro em centavos; descrição está incluída. A coleção paginada e a escrita `/places` ainda usam Local, um contrato diferente. Criação de viagem recebe nome/cidade/modo, datas e orçamento opcionais; proprietário vem do JWT. Sucesso retorna 201/Location. Excluir retorna 204 sem corpo. Salvos duplicados e lugares inexistentes são rejeitados com 400; associações ausentes retornam 404.
 
-Salvos, viagens, paradas e conta própria conferem proprietário. Isso não significa autorização completa dos demais recursos. Exclusão de viagem remove memos, notas, paradas e mídia de viagem na mesma transação; a exclusão isolada de uma parada com memos ainda precisa de tratamento.
+Salvos, viagens, paradas, notas, memos e conta própria conferem proprietário. Isso não significa autorização completa dos demais recursos. Exclusão de viagem remove memos, notas, paradas e mídia de viagem na mesma transação; a exclusão isolada de uma parada com memos ainda precisa de tratamento.
 
 ## Android local e hospedagem
 

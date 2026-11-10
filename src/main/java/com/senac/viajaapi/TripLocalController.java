@@ -1,5 +1,6 @@
 package com.senac.viajaapi;
 
+import java.time.LocalTime;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
@@ -10,6 +11,7 @@ import org.springframework.hateoas.IanaLinkRelations;
 import org.springframework.hateoas.PagedModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -24,6 +26,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 
 @RestController
 @RequestMapping("/trip-locals")
@@ -32,16 +36,16 @@ public class TripLocalController {
 
     private final TripLocalRepository repository;
     private final TripRepository tripRepository;
-    private final UserRepository userRepository;
+    private final TripAccess tripAccess;
     private final LocalRepository localRepository;
     private final TripLocalModelAssembler assembler;
     private final org.springframework.data.web.PagedResourcesAssembler<TripLocal> pagedResourcesAssembler;
 
-    public TripLocalController(TripLocalRepository repository, TripRepository tripRepository, UserRepository userRepository, LocalRepository localRepository, TripLocalModelAssembler assembler,
+    public TripLocalController(TripLocalRepository repository, TripRepository tripRepository, TripAccess tripAccess, LocalRepository localRepository, TripLocalModelAssembler assembler,
             org.springframework.data.web.PagedResourcesAssembler<TripLocal> pagedResourcesAssembler) {
         this.repository = repository;
         this.tripRepository = tripRepository;
-        this.userRepository = userRepository;
+        this.tripAccess = tripAccess;
         this.localRepository = localRepository;
         this.assembler = assembler;
         this.pagedResourcesAssembler = pagedResourcesAssembler;
@@ -52,7 +56,7 @@ public class TripLocalController {
     @GetMapping
     public ResponseEntity<PagedModel<EntityModel<TripLocal>>> getAllTripLocals(
             @org.springdoc.core.annotations.ParameterObject @PageableDefault(size = 10, page = 0, sort = "id") Pageable pageable) {
-        List<Long> tripIds = tripRepository.findByUserId(currentUserId(), Pageable.unpaged()).stream().map(Trip::getId).toList();
+        List<Long> tripIds = tripRepository.findByUserId(tripAccess.currentUserId(), Pageable.unpaged()).stream().map(Trip::getId).toList();
         Page<TripLocal> page = repository.findById_TripIdIn(tripIds, pageable);
         PagedModel<EntityModel<TripLocal>> pagedModel = pagedResourcesAssembler.toModel(page, assembler);
         return ResponseEntity.ok(pagedModel);
@@ -62,7 +66,7 @@ public class TripLocalController {
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Lista de paradas da viagem")
     @GetMapping("/trip/{tripId}")
     public List<TripLocal> getTripLocalsByTrip(@Parameter(description = "Identificador numerico da viagem") @PathVariable Long tripId) {
-        requireTrip(tripId);
+        tripAccess.requireOwner(tripId);
         return repository.findById_TripIdOrderByDayAscOrderIndexAsc(tripId);
     }
 
@@ -70,7 +74,7 @@ public class TripLocalController {
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Parada criada com sucesso")
     @PostMapping
     public ResponseEntity<EntityModel<TripLocal>> newTripLocal(@RequestBody @Valid TripLocal newTripLocal) {
-        Trip trip = requireTrip(newTripLocal.getTripId());
+        Trip trip = tripAccess.requireOwner(newTripLocal.getTripId());
         if (newTripLocal.getLocalId() == null) throw new IllegalArgumentException("Place is required");
         Local place = localRepository.findById(newTripLocal.getLocalId()).orElseThrow(() -> new IllegalArgumentException("Place does not exist"));
         if (!java.util.Objects.equals(trip.getCityId(), place.getCityId())) throw new IllegalArgumentException("Place must belong to the trip city");
@@ -89,7 +93,7 @@ public class TripLocalController {
     public EntityModel<TripLocal> getTripLocalById(
             @Parameter(description = "Identificador numerico da viagem") @PathVariable Long tripId,
             @Parameter(description = "Identificador numerico do local") @PathVariable Long localId) {
-        requireTrip(tripId);
+        tripAccess.requireOwner(tripId);
         TripLocal tripLocal = repository.findById(new TripLocalId(tripId, localId))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Parada nao encontrada com tripId: " + tripId + " e localId: " + localId));
         return assembler.toModel(tripLocal);
@@ -99,11 +103,12 @@ public class TripLocalController {
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Parada atualizada com sucesso")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Parada nao encontrada")
     @PutMapping("/{tripId}/{localId}")
+    @Transactional
     public ResponseEntity<EntityModel<TripLocal>> updateTripLocal(
             @Parameter(description = "Identificador numerico da viagem") @PathVariable Long tripId,
             @Parameter(description = "Identificador numerico do local") @PathVariable Long localId,
             @RequestBody @Valid TripLocal newTripLocal) {
-        requireTrip(tripId);
+        tripAccess.requireOwner(tripId);
         TripLocal tripLocal = repository.findById(new TripLocalId(tripId, localId))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Parada nao encontrada com tripId: " + tripId + " e localId: " + localId));
         validate(newTripLocal);
@@ -113,6 +118,24 @@ public class TripLocalController {
         return ResponseEntity.ok(assembler.toModel(repository.save(tripLocal)));
     }
 
+    @Operation(summary = "Atualizar horário e conclusão da parada")
+    @PutMapping("/{tripId}/{localId}/schedule")
+    @Transactional
+    public EntityModel<TripLocal> updateSchedule(@PathVariable Long tripId, @PathVariable Long localId,
+            @Valid @RequestBody StopSchedule request) {
+        tripAccess.requireOwner(tripId);
+        TripLocal stop = repository.findById(new TripLocalId(tripId, localId))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Stop does not exist"));
+        stop.setScheduledTime(request.scheduledTime() == null ? null : LocalTime.parse(request.scheduledTime()));
+        stop.setCompleted(request.completed());
+        return assembler.toModel(stop);
+    }
+
+    public record StopSchedule(
+            @Pattern(regexp = "(?:[01][0-9]|2[0-3]):[0-5][0-9]") String scheduledTime,
+            @NotNull Boolean completed) {
+    }
+
     @Operation(summary = "Excluir parada")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "204", description = "Parada excluída com sucesso")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Parada nao encontrada")
@@ -120,24 +143,12 @@ public class TripLocalController {
     public ResponseEntity<?> deleteTripLocal(
             @Parameter(description = "Identificador numerico da viagem") @PathVariable Long tripId,
             @Parameter(description = "Identificador numerico do local") @PathVariable Long localId) {
-        requireTrip(tripId);
+        tripAccess.requireOwner(tripId);
         if (!repository.existsById(new TripLocalId(tripId, localId))) {
             return ResponseEntity.notFound().build();
         }
         repository.deleteById(new TripLocalId(tripId, localId));
         return ResponseEntity.noContent().build();
-    }
-
-    private Long currentUserId() {
-        String email = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getName();
-        return userRepository.findByEmail(email).orElseThrow(() -> new org.springframework.security.access.AccessDeniedException("Access denied")).getId();
-    }
-
-    private Trip requireTrip(Long tripId) {
-        if (tripId == null) throw new IllegalArgumentException("Trip is required");
-        Trip trip = tripRepository.findById(tripId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Trip does not exist"));
-        if (!currentUserId().equals(trip.getUserId())) throw new org.springframework.security.access.AccessDeniedException("Access denied");
-        return trip;
     }
 
     private void validate(TripLocal stop) {
