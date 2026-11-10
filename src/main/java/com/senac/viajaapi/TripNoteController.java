@@ -8,6 +8,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.IanaLinkRelations;
 import org.springframework.hateoas.PagedModel;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -55,7 +57,7 @@ public class TripNoteController {
     @GetMapping("/{id}")
     public EntityModel<TripNote> getTripNoteById(@Parameter(description = "Identificador da anotacao") @PathVariable Long id) {
         TripNote note = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Anotacao nao encontrada com ID: " + id));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Anotacao nao encontrada com ID: " + id));
         return assembler.toModel(note);
     }
 
@@ -79,7 +81,7 @@ public class TripNoteController {
     public ResponseEntity<EntityModel<TripNote>> updateTripNote(
             @PathVariable Long id, @RequestBody @Valid TripNote newTripNote) {
         TripNote note = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Anotacao nao encontrada com ID: " + id));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Anotacao nao encontrada com ID: " + id));
         note.setNote(newTripNote.getNote());
         return ResponseEntity.ok(assembler.toModel(repository.save(note)));
     }

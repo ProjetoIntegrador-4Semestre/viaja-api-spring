@@ -27,12 +27,6 @@ public class GlobalExceptionHandler {
                 .headers(ex.getHeaders()).body("Method not allowed");
     }
 
-    @ExceptionHandler(RuntimeException.class)
-    @ResponseStatus(HttpStatus.NOT_FOUND)
-    String notFound(RuntimeException ex) {
-        return ex.getMessage();
-    }
-
     @ExceptionHandler(IllegalArgumentException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     String badRequest(IllegalArgumentException ex) {

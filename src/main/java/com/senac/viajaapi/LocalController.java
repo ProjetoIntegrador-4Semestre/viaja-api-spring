@@ -11,6 +11,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.IanaLinkRelations;
 import org.springframework.hateoas.PagedModel;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -107,7 +109,7 @@ public class LocalController {
     @GetMapping("/{id}")
     public EntityModel<PlaceResponse> getPlaceById(@Parameter(description = "Identificador numerico do lugar") @PathVariable Long id) {
         Local local = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Lugar nao encontrado com ID: " + id));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Lugar nao encontrado com ID: " + id));
         return EntityModel.of(toPlaceResponse(local), assembler.toModel(local).getLinks());
     }
 
@@ -136,7 +138,7 @@ public class LocalController {
             @Parameter(description = "Identificador numerico do lugar a ser atualizado") @PathVariable Long id,
             @RequestBody @Valid Local newLocal) {
         Local local = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Lugar nao encontrado com ID: " + id));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Lugar nao encontrado com ID: " + id));
         local.setName(newLocal.getName());
         local.setAddress(newLocal.getAddress());
         local.setLat(newLocal.getLat());

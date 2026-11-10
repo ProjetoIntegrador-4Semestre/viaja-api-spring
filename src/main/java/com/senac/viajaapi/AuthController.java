@@ -10,6 +10,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -40,6 +41,7 @@ public class AuthController {
 
     @Operation(summary = "Login", description = "Autentica um usuário com email e senha. Gera um token JWT válido por 24 horas, retornado no header Authorization: Bearer <token>. O token deve ser enviado em todas as requisições subsequentes em endpoints protegidos.")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Autenticado com sucesso", content = @Content(schema = @Schema(implementation = LoginResponse.class)))
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Dados de login ausentes ou inválidos")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Credenciais invalidas: email ou senha incorretos")
     @io.swagger.v3.oas.annotations.parameters.RequestBody(
             description = "Credenciais de login do usuario",
@@ -97,7 +99,7 @@ public class AuthController {
         String token = jwtService.generateToken(userDetails);
 
         User usuario = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+                .orElseThrow(() -> new BadCredentialsException("Invalid credentials"));
 
         UserResponse userResponse = new UserResponse(
                 usuario.getId(), usuario.getEmail(), usuario.getName(), usuario.getDefaultMode()

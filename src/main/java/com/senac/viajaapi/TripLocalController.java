@@ -8,6 +8,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.IanaLinkRelations;
 import org.springframework.hateoas.PagedModel;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -89,7 +91,7 @@ public class TripLocalController {
             @Parameter(description = "Identificador numerico do local") @PathVariable Long localId) {
         requireTrip(tripId);
         TripLocal tripLocal = repository.findById(new TripLocalId(tripId, localId))
-                .orElseThrow(() -> new RuntimeException("Parada nao encontrada com tripId: " + tripId + " e localId: " + localId));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Parada nao encontrada com tripId: " + tripId + " e localId: " + localId));
         return assembler.toModel(tripLocal);
     }
 
@@ -103,7 +105,7 @@ public class TripLocalController {
             @RequestBody @Valid TripLocal newTripLocal) {
         requireTrip(tripId);
         TripLocal tripLocal = repository.findById(new TripLocalId(tripId, localId))
-                .orElseThrow(() -> new RuntimeException("Parada nao encontrada com tripId: " + tripId + " e localId: " + localId));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Parada nao encontrada com tripId: " + tripId + " e localId: " + localId));
         validate(newTripLocal);
         tripLocal.setOrderIndex(newTripLocal.getOrderIndex());
         tripLocal.setDay(newTripLocal.getDay());
@@ -133,7 +135,7 @@ public class TripLocalController {
 
     private Trip requireTrip(Long tripId) {
         if (tripId == null) throw new IllegalArgumentException("Trip is required");
-        Trip trip = tripRepository.findById(tripId).orElseThrow(() -> new RuntimeException("Trip does not exist"));
+        Trip trip = tripRepository.findById(tripId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Trip does not exist"));
         if (!currentUserId().equals(trip.getUserId())) throw new org.springframework.security.access.AccessDeniedException("Access denied");
         return trip;
     }

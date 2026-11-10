@@ -8,6 +8,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.IanaLinkRelations;
 import org.springframework.hateoas.PagedModel;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -55,7 +57,7 @@ public class ReviewController {
     @GetMapping("/{id}")
     public EntityModel<Review> getReviewById(@Parameter(description = "Identificador da avaliacao") @PathVariable Long id) {
         Review review = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Avaliacao nao encontrada com ID: " + id));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Avaliacao nao encontrada com ID: " + id));
         return assembler.toModel(review);
     }
 
@@ -84,7 +86,7 @@ public class ReviewController {
             @Parameter(description = "Identificador da avaliacao") @PathVariable Long id,
             @RequestBody @Valid Review newReview) {
         Review review = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Avaliacao nao encontrada com ID: " + id));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Avaliacao nao encontrada com ID: " + id));
         review.setRating(newReview.getRating());
         return ResponseEntity.ok(assembler.toModel(repository.save(review)));
     }

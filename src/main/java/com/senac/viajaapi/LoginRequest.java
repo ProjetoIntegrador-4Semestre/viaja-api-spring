@@ -1,8 +1,13 @@
 package com.senac.viajaapi;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+
 public class LoginRequest {
 
+    @NotBlank
     private String email;
+    @NotNull
     private String senha;
 
     public LoginRequest() {

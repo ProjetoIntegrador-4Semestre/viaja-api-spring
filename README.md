@@ -34,7 +34,7 @@ python3 scripts/smoke_test.py
 
 `--base-url` altera o endereço consultado. A verificação espera contagens e registros iniciais; ela cria e remove vínculos/viagens de demonstração. Não executar em um banco de usuários reais. O script não imprime JWTs.
 
-São dez grupos de assertivas: paginação/seed de cidades; 404 de cidade; busca de lugares; consistência busca/detalhe; OpenAPI; login inválido; login válido/acesso autenticado; salvos; viagens/paradas; privacidade da conta. Incluem testes de acesso cruzado nos recursos já protegidos. Não cobrem todo CRUD, todas as relações, todos os controladores nem o Android. `mvnw verify` não significa que existe uma suíte Java completa.
+As verificações cobrem catálogo, paginação, OpenAPI, login, sessão, salvos, viagens, paradas e privacidade da conta. Incluem testes de acesso cruzado nos recursos já protegidos. `mvnw verify` compila e empacota a API. O script verifica as respostas HTTP de uma instância em execução.
 
 ## Contratos usados pelo Android
 
@@ -51,7 +51,15 @@ Não existe prefixo `/api` nos caminhos abaixo. Swagger precisa de revisão de e
 | Paradas | `/trip-locals`; lista simples ordenada em `/trip-locals/trip/{tripId}`; detalhe/mutações por viagem/lugar |
 | Salvos | `/users/{userId}/saved-locals`, HAL em `_embedded.savedLocals`; `/{localId}` usa o ID do lugar |
 
-A conta local de demonstração é `rafael@email.com`, senha `senha123`. Esses dados pertencem ao seed e não são credenciais de produção. Usar o valor completo `Bearer ...` devolvido pelo login no header das consultas privadas.
+A conta local de demonstração é `rafael@email.com`, senha `senha123`.
+
+```sh
+curl -i http://localhost:18080/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"rafael@email.com","senha":"senha123"}'
+```
+
+O login retorna 200. Use o valor completo `Bearer ...` do header `Authorization` nas consultas privadas. Dados de login ausentes retornam 400. Credenciais incorretas ou acesso privado sem token válido retornam 401. Uma conta autenticada sem permissão recebe 403 nos recursos com controle de proprietário. Recursos inexistentes retornam 404 quando a requisição chega ao roteamento, e `GET /auth/login` retorna 405.
 
 Na leitura de lugares, `id` é textual e `price` é inteiro em centavos; descrição está incluída. A coleção paginada e a escrita `/places` ainda usam Local, um contrato diferente. Criação de viagem recebe nome/cidade/modo, datas e orçamento opcionais; proprietário vem do JWT. Sucesso retorna 201/Location. Excluir retorna 204 sem corpo. Salvos duplicados e lugares inexistentes são rejeitados com 400; associações ausentes retornam 404.
 
@@ -71,6 +79,6 @@ No repositório Android, compilar debug com `-PapiBaseUrl=http://127.0.0.1:18080
 
 Stripe test Checkout/webhooks é direção confirmada, não integração existente. Planos, quotas e política de acesso ficam na referência de produto. O CRUD atual de Subscription não pode se tornar autoridade para conceder Premium; faltam persistência durável, identificação do cliente/assinatura e controle de eventos. Não usar dados fictícios de assinatura como confirmação Stripe.
 
-A exposição de hash e o acesso cruzado de UserController foram corrigidos. O estado da implementação ainda registra acesso cruzado em outros recursos, escrita pública no catálogo e problemas de JWT/erros. Fechar essas falhas antes de conectar um webhook público ou apresentar uma aplicação segura. H2 console, segredo padrão e configuração de desenvolvimento não são configuração de produção aprovada.
+A exposição de hash e o acesso cruzado de UserController foram corrigidos localmente. O estado da implementação ainda registra acesso cruzado em outros recursos e escrita pública no catálogo. A publicação precisa de configuração própria para o console H2, a chave de assinatura JWT e os dados de demonstração.
 
 `HELP.md` é template gerado pelo Spring e está ignorado no Git; não contém regras do Viajá. Os documentos antigos de UUID/PostgreSQL/rotas `/api` foram classificados e preservados na revisão documental, não aplicados como migração.

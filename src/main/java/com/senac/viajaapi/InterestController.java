@@ -6,6 +6,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.IanaLinkRelations;
 import org.springframework.hateoas.PagedModel;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -52,7 +54,7 @@ public class InterestController {
     @GetMapping("/{id}")
     public EntityModel<Interest> getInterestById(@Parameter(description = "Identificador do interesse") @PathVariable Long id) {
         Interest interest = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Interesse nao encontrado com ID: " + id));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Interesse nao encontrado com ID: " + id));
         return assembler.toModel(interest);
     }
 
@@ -72,7 +74,7 @@ public class InterestController {
     public ResponseEntity<EntityModel<Interest>> updateInterest(
             @PathVariable Long id, @RequestBody @Valid Interest newInterest) {
         Interest interest = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Interesse nao encontrado com ID: " + id));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Interesse nao encontrado com ID: " + id));
         interest.setName(newInterest.getName());
         interest.setCategory(newInterest.getCategory());
         return ResponseEntity.ok(assembler.toModel(repository.save(interest)));

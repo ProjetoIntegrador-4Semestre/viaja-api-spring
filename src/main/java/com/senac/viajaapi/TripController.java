@@ -9,6 +9,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.IanaLinkRelations;
 import org.springframework.hateoas.PagedModel;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -107,7 +109,7 @@ public class TripController {
     @GetMapping("/{id}")
     public EntityModel<Trip> getTripById(@Parameter(description = "Identificador numerico da viagem") @PathVariable Long id) {
         Trip viagem = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Viagem nao encontrada com ID: " + id));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Viagem nao encontrada com ID: " + id));
         requireUser(viagem.getUserId());
         return assembler.toModel(viagem);
     }
@@ -120,7 +122,7 @@ public class TripController {
             @Parameter(description = "Identificador numerico da viagem a ser atualizada") @PathVariable Long id,
             @RequestBody @Valid TripRequest request) {
         Trip viagem = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Viagem nao encontrada com ID: " + id));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Viagem nao encontrada com ID: " + id));
         requireUser(viagem.getUserId());
         if (request.getUserId() != null) requireUser(request.getUserId());
         validate(request);
@@ -143,7 +145,7 @@ public class TripController {
     @org.springframework.transaction.annotation.Transactional
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteTrip(@Parameter(description = "Identificador numerico da viagem a ser excluída") @PathVariable Long id) {
-        Trip trip = repository.findById(id).orElseThrow(() -> new RuntimeException("Trip does not exist"));
+        Trip trip = repository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Trip does not exist"));
         requireUser(trip.getUserId());
         memoRepository.deleteByTripId(id);
         noteRepository.deleteByTripId(id);

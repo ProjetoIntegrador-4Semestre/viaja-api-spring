@@ -72,6 +72,17 @@ def main():
     assert "/auth/login" in json.loads(body)["paths"]
     print("PASS: OpenAPI document is available")
 
+    status, _, _ = request(base_url, "/auth/login")
+    assert status == 405, f"GET login returned {status}, expected 405"
+    status, _, _ = request(base_url, "/auth/login", {})
+    assert status == 400, f"Missing login fields returned {status}, expected 400"
+    for rejected_token in (None, "Bearer invalid"):
+        status, _, _ = request(base_url, "/trips", token=rejected_token)
+        assert status == 401, f"Missing or invalid token returned {status}, expected 401"
+    status, _, _ = request(base_url, "/cities", token="Bearer invalid")
+    assert status == 200, f"Invalid token blocked the public catalog with {status}"
+    print("PASS: login method, required fields and authentication boundary")
+
     status, _, _ = request(base_url, "/auth/login", {
         "email": "rafael@email.com", "senha": "invalid-password"
     })
@@ -80,12 +91,14 @@ def main():
 
     status, headers, _ = request(base_url, "/auth/login", {
         "email": "rafael@email.com", "senha": "senha123"
-    })
+    }, token="Bearer invalid")
     assert status == 200
     token = headers.get("Authorization", "")
     assert token.startswith("Bearer ")
     status, _, _ = request(base_url, "/trips", token=token)
     assert status == 200
+    status, _, _ = request(base_url, "/api/auth/login", {}, token=token)
+    assert status == 404, f"Unknown route returned {status}, expected 404"
     print("PASS: seeded user can authenticate and access trips")
 
     for method, path, body in [

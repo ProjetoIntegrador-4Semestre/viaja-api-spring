@@ -6,6 +6,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.IanaLinkRelations;
 import org.springframework.hateoas.PagedModel;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -64,7 +66,7 @@ public class SubscriptionController {
     @GetMapping("/{id}")
     public EntityModel<Subscription> getSubscriptionById(@Parameter(description = "Identificador da assinatura") @PathVariable Long id) {
         Subscription subscription = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Assinatura nao encontrada com ID: " + id));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Assinatura nao encontrada com ID: " + id));
         return assembler.toModel(subscription);
     }
 
@@ -84,7 +86,7 @@ public class SubscriptionController {
     public ResponseEntity<EntityModel<Subscription>> updateSubscription(
             @PathVariable Long id, @RequestBody @Valid Subscription newSubscription) {
         Subscription subscription = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Assinatura nao encontrada com ID: " + id));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Assinatura nao encontrada com ID: " + id));
         subscription.setPlan(newSubscription.getPlan());
         subscription.setStatus(newSubscription.getStatus());
         subscription.setAmount(newSubscription.getAmount());

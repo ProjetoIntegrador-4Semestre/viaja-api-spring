@@ -5,6 +5,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.PagedModel;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -52,7 +54,7 @@ public class UserController {
     public EntityModel<User> getUserById(@Parameter(description = "Identificador numerico do usuario") @PathVariable Long id) {
         requireOwner(id);
         User user = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Usuario nao encontrado com ID: " + id));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario nao encontrado com ID: " + id));
         return assembler.toModel(user);
     }
 
@@ -65,7 +67,7 @@ public class UserController {
             @RequestBody @Valid User newUser) {
         requireOwner(id);
         User user = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Usuario nao encontrado com ID: " + id));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario nao encontrado com ID: " + id));
         user.setName(newUser.getName());
         user.setEmail(newUser.getEmail());
         user.setPhone(newUser.getPhone());
