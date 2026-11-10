@@ -33,14 +33,16 @@ public class TripMemoController {
 
     private final TripMemoRepository repository;
     private final TripLocalRepository tripLocalRepository;
+    private final TripAccess tripAccess;
     private final TripMemoModelAssembler assembler;
     private final org.springframework.data.web.PagedResourcesAssembler<TripMemo> pagedResourcesAssembler;
 
     public TripMemoController(TripMemoRepository repository, TripLocalRepository tripLocalRepository,
-            TripMemoModelAssembler assembler,
+            TripAccess tripAccess, TripMemoModelAssembler assembler,
             org.springframework.data.web.PagedResourcesAssembler<TripMemo> pagedResourcesAssembler) {
         this.repository = repository;
         this.tripLocalRepository = tripLocalRepository;
+        this.tripAccess = tripAccess;
         this.assembler = assembler;
         this.pagedResourcesAssembler = pagedResourcesAssembler;
     }
@@ -50,7 +52,7 @@ public class TripMemoController {
     @GetMapping
     public ResponseEntity<PagedModel<EntityModel<TripMemo>>> getAllTripMemos(
             @org.springdoc.core.annotations.ParameterObject @PageableDefault(size = 10, page = 0, sort = "id") Pageable pageable) {
-        Page<TripMemo> page = repository.findAll(pageable);
+        Page<TripMemo> page = repository.findOwnedBy(tripAccess.currentUserId(), pageable);
         return ResponseEntity.ok(pagedResourcesAssembler.toModel(page, assembler));
     }
 
@@ -60,6 +62,7 @@ public class TripMemoController {
     public List<TripMemo> getMemosByTripLocal(
             @Parameter(description = "Identificador da viagem") @PathVariable Long tripId,
             @Parameter(description = "Identificador do local") @PathVariable Long localId) {
+        requireStop(tripId, localId);
         return repository.findByTripIdAndLocalId(tripId, localId);
     }
 
@@ -68,8 +71,7 @@ public class TripMemoController {
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Anotacao nao encontrada")
     @GetMapping("/{id}")
     public EntityModel<TripMemo> getTripMemoById(@Parameter(description = "Identificador da anotacao") @PathVariable Long id) {
-        TripMemo memo = repository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Anotacao nao encontrada com ID: " + id));
+        TripMemo memo = requireMemo(id);
         return assembler.toModel(memo);
     }
 
@@ -78,12 +80,12 @@ public class TripMemoController {
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Parada de roteiro nao encontrada")
     @PostMapping
     public ResponseEntity<EntityModel<TripMemo>> newTripMemo(@RequestBody @Valid TripMemo newTripMemo) {
-        if (tripLocalRepository.findById(new TripLocalId(newTripMemo.getTripId(), newTripMemo.getLocalId())).isEmpty()) {
-            throw new IllegalArgumentException("Parada de roteiro nao encontrada para tripId=" + newTripMemo.getTripId()
-                    + " e localId=" + newTripMemo.getLocalId());
-        }
-        newTripMemo.setCreatedAt(LocalDateTime.now());
-        TripMemo saved = repository.save(newTripMemo);
+        Long tripId = newTripMemo.getTripId();
+        Long localId = newTripMemo.getLocalId();
+        TripLocal stop = requireStop(tripId, localId);
+        TripMemo memo = new TripMemo(tripId, localId, newTripMemo.getNote(), LocalDateTime.now());
+        memo.setTripLocal(stop);
+        TripMemo saved = repository.save(memo);
         EntityModel<TripMemo> entityModel = assembler.toModel(saved);
         return ResponseEntity.created(entityModel.getRequiredLink(IanaLinkRelations.SELF).toUri()).body(entityModel);
     }
@@ -94,8 +96,7 @@ public class TripMemoController {
     @PutMapping("/{id}")
     public ResponseEntity<EntityModel<TripMemo>> updateTripMemo(
             @PathVariable Long id, @RequestBody @Valid TripMemo newTripMemo) {
-        TripMemo memo = repository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Anotacao nao encontrada com ID: " + id));
+        TripMemo memo = requireMemo(id);
         memo.setNote(newTripMemo.getNote());
         return ResponseEntity.ok(assembler.toModel(repository.save(memo)));
     }
@@ -105,10 +106,21 @@ public class TripMemoController {
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Anotacao nao encontrada")
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteTripMemo(@PathVariable Long id) {
-        if (!repository.existsById(id)) {
-            return ResponseEntity.notFound().build();
-        }
-        repository.deleteById(id);
+        repository.delete(requireMemo(id));
         return ResponseEntity.noContent().build();
+    }
+
+    private TripMemo requireMemo(Long id) {
+        TripMemo memo = repository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Memo does not exist"));
+        requireStop(memo.getTripId(), memo.getLocalId());
+        return memo;
+    }
+
+    private TripLocal requireStop(Long tripId, Long localId) {
+        tripAccess.requireOwner(tripId);
+        if (localId == null) throw new IllegalArgumentException("Place is required");
+        return tripLocalRepository.findById(new TripLocalId(tripId, localId))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Stop does not exist"));
     }
 }

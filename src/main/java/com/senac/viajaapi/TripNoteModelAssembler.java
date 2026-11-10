@@ -14,7 +14,7 @@ public class TripNoteModelAssembler implements RepresentationModelAssembler<Trip
     @Override
     public EntityModel<TripNote> toModel(TripNote tripNote) {
         return EntityModel.of(tripNote,
-                linkTo(methodOn(TripNoteController.class).getTripNoteById(tripNote.getId())).withSelfRel(),
+                linkTo(methodOn(TripNoteController.class).getTripNoteById(tripNote.getTripId(), tripNote.getId())).withSelfRel(),
                 linkTo(methodOn(TripNoteController.class).getTripNotesByTrip(tripNote.getTripId(), Pageable.unpaged())).withRel("tripNotes"));
     }
 }

@@ -31,12 +31,14 @@ import jakarta.validation.Valid;
 public class TripNoteController {
 
     private final TripNoteRepository repository;
+    private final TripAccess tripAccess;
     private final TripNoteModelAssembler assembler;
     private final org.springframework.data.web.PagedResourcesAssembler<TripNote> pagedResourcesAssembler;
 
-    public TripNoteController(TripNoteRepository repository, TripNoteModelAssembler assembler,
+    public TripNoteController(TripNoteRepository repository, TripAccess tripAccess, TripNoteModelAssembler assembler,
             org.springframework.data.web.PagedResourcesAssembler<TripNote> pagedResourcesAssembler) {
         this.repository = repository;
+        this.tripAccess = tripAccess;
         this.assembler = assembler;
         this.pagedResourcesAssembler = pagedResourcesAssembler;
     }
@@ -47,6 +49,7 @@ public class TripNoteController {
     public ResponseEntity<PagedModel<EntityModel<TripNote>>> getTripNotesByTrip(
             @Parameter(description = "Identificador da viagem") @PathVariable Long tripId,
             @org.springdoc.core.annotations.ParameterObject @PageableDefault(size = 10, page = 0, sort = "id") Pageable pageable) {
+        tripAccess.requireOwner(tripId);
         Page<TripNote> page = repository.findByTripId(tripId, pageable);
         return ResponseEntity.ok(pagedResourcesAssembler.toModel(page, assembler));
     }
@@ -55,10 +58,8 @@ public class TripNoteController {
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Anotacao encontrada")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Anotacao nao encontrada")
     @GetMapping("/{id}")
-    public EntityModel<TripNote> getTripNoteById(@Parameter(description = "Identificador da anotacao") @PathVariable Long id) {
-        TripNote note = repository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Anotacao nao encontrada com ID: " + id));
-        return assembler.toModel(note);
+    public EntityModel<TripNote> getTripNoteById(@PathVariable Long tripId, @PathVariable Long id) {
+        return assembler.toModel(requireNote(tripId, id));
     }
 
     @Operation(summary = "Criar anotacao de viagem")
@@ -67,9 +68,8 @@ public class TripNoteController {
     public ResponseEntity<EntityModel<TripNote>> newTripNote(
             @Parameter(description = "Identificador da viagem") @PathVariable Long tripId,
             @RequestBody @Valid TripNote newTripNote) {
-        newTripNote.setTripId(tripId);
-        newTripNote.setCreatedAt(LocalDateTime.now());
-        TripNote saved = repository.save(newTripNote);
+        tripAccess.requireOwner(tripId);
+        TripNote saved = repository.save(new TripNote(tripId, newTripNote.getNote(), LocalDateTime.now()));
         EntityModel<TripNote> entityModel = assembler.toModel(saved);
         return ResponseEntity.created(entityModel.getRequiredLink(IanaLinkRelations.SELF).toUri()).body(entityModel);
     }
@@ -79,9 +79,8 @@ public class TripNoteController {
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Anotacao nao encontrada")
     @PutMapping("/{id}")
     public ResponseEntity<EntityModel<TripNote>> updateTripNote(
-            @PathVariable Long id, @RequestBody @Valid TripNote newTripNote) {
-        TripNote note = repository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Anotacao nao encontrada com ID: " + id));
+            @PathVariable Long tripId, @PathVariable Long id, @RequestBody @Valid TripNote newTripNote) {
+        TripNote note = requireNote(tripId, id);
         note.setNote(newTripNote.getNote());
         return ResponseEntity.ok(assembler.toModel(repository.save(note)));
     }
@@ -90,11 +89,14 @@ public class TripNoteController {
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "204", description = "Anotacao excluída")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Anotacao nao encontrada")
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteTripNote(@PathVariable Long id) {
-        if (!repository.existsById(id)) {
-            return ResponseEntity.notFound().build();
-        }
-        repository.deleteById(id);
+    public ResponseEntity<?> deleteTripNote(@PathVariable Long tripId, @PathVariable Long id) {
+        repository.delete(requireNote(tripId, id));
         return ResponseEntity.noContent().build();
+    }
+
+    private TripNote requireNote(Long tripId, Long id) {
+        tripAccess.requireOwner(tripId);
+        return repository.findByIdAndTripId(id, tripId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Note does not exist"));
     }
 }
