@@ -61,9 +61,17 @@ public class StripeBillingController {
     }
 
     @GetMapping("/subscription")
+    @Transactional
     public SubscriptionResponse subscription() {
-        var state = memberships.findById(access.currentUserId()).orElse(null);
+        Long userId = access.currentUserId();
+        User user = lockUser(userId);
+        var state = memberships.findById(userId).orElse(null);
         if (state == null) return new SubscriptionResponse("free", false, null, false, false);
+        if (state.reference != null || (state.subscriptionId != null && state.paidUntil == null
+                && Set.of("active", "incomplete", "past_due").contains(state.status))) {
+            requireConfiguration();
+            refreshPending(user, state);
+        }
         boolean active = state.paidUntil != null && state.paidUntil.isAfter(Instant.now())
                 && Set.of("active", "past_due").contains(state.status);
         return new SubscriptionResponse(state.status, active, state.paidUntil, state.cancelAtPeriodEnd,
@@ -169,6 +177,31 @@ public class StripeBillingController {
         } else if (!subscriptionId.equals(state.subscriptionId)) {
             return;
         }
+        String customer = checkout ? object.path("customer").asText() : state.customerId;
+        if (reconcile(state, subscriptionId, customer)) events.save(new StripeEvent(eventId));
+    }
+
+    private void refreshPending(User user, StripeMembership state) {
+        if (state.reference == null) {
+            reconcile(state, state.subscriptionId, state.customerId);
+            return;
+        }
+        JsonNode sessions = get("/v1/checkout/sessions?payment_link={id}&status=complete&limit=100", linkId);
+        for (JsonNode session : sessions.path("data")) {
+            if (!state.reference.equals(session.path("client_reference_id").asText())
+                    || !linkId.equals(session.path("payment_link").asText())
+                    || !"subscription".equals(session.path("mode").asText())
+                    || !"paid".equals(session.path("payment_status").asText())
+                    || !session.path("livemode").isBoolean() || session.path("livemode").asBoolean()
+                    || !user.getEmail().equalsIgnoreCase(session.path("customer_details").path("email").asText())) {
+                continue;
+            }
+            if (reconcile(state, session.path("subscription").asText(), session.path("customer").asText())) return;
+        }
+    }
+
+    private boolean reconcile(StripeMembership state, String subscriptionId, String expectedCustomer) {
+        if (subscriptionId == null || !subscriptionId.matches("sub_[A-Za-z0-9]+")) return false;
         JsonNode current = get("/v1/subscriptions/{id}?expand[]=latest_invoice", subscriptionId);
         var items = current.path("items").path("data");
         var item = items.path(0);
@@ -176,8 +209,7 @@ public class StripeBillingController {
         if (!current.path("livemode").isBoolean() || current.path("livemode").asBoolean()
                 || items.size() != 1 || !priceId.equals(item.path("price").path("id").asText())
                 || !customer.matches("cus_[A-Za-z0-9]+")
-                || (checkout && !customer.equals(object.path("customer").asText()))
-                || (!firstCheckout && !customer.equals(state.customerId))) return;
+                || !customer.equals(expectedCustomer)) return false;
 
         if (!subscriptionId.equals(state.subscriptionId)) state.paidUntil = null;
         state.subscriptionId = subscriptionId;
@@ -199,7 +231,7 @@ public class StripeBillingController {
             }
         }
         memberships.save(state);
-        events.save(new StripeEvent(eventId));
+        return true;
     }
 
     private User lockUser(Long id) {
