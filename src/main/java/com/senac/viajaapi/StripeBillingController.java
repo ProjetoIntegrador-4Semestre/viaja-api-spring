@@ -67,10 +67,10 @@ public class StripeBillingController {
         User user = lockUser(userId);
         var state = memberships.findById(userId).orElse(null);
         if (state == null) return new SubscriptionResponse("free", false, null, false, false);
-        if (state.reference != null || (state.subscriptionId != null && state.paidUntil == null
-                && Set.of("active", "incomplete", "past_due").contains(state.status))) {
+        if (state.reference != null || (state.subscriptionId != null
+                && !Set.of("canceled", "incomplete_expired").contains(state.status))) {
             requireConfiguration();
-            refreshPending(user, state);
+            refreshSubscription(user, state);
         }
         boolean active = state.paidUntil != null && state.paidUntil.isAfter(Instant.now())
                 && Set.of("active", "past_due").contains(state.status);
@@ -181,7 +181,7 @@ public class StripeBillingController {
         if (reconcile(state, subscriptionId, customer)) events.save(new StripeEvent(eventId));
     }
 
-    private void refreshPending(User user, StripeMembership state) {
+    private void refreshSubscription(User user, StripeMembership state) {
         if (state.reference == null) {
             reconcile(state, state.subscriptionId, state.customerId);
             return;

@@ -17,6 +17,7 @@ public class PlaceResponse {
     @io.swagger.v3.oas.annotations.media.Schema(description = "Price in cents", example = "15000")
     private Integer price;
     private String description;
+    private String website;
     private String priceHint;
     private String photoUrl;
     private Boolean openNow;
@@ -67,6 +68,9 @@ public class PlaceResponse {
     public void setRatingCount(Integer ratingCount) { this.ratingCount = ratingCount; }
     public Integer getPrice() { return price; }
     public void setPrice(Integer price) { this.price = price; }
+    public String getWebsite() { return website; }
+    public void setWebsite(String website) { this.website = website; }
+
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
     public String getPriceHint() { return priceHint; }

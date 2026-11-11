@@ -1,0 +1,66 @@
+Salvador|BA|Pelourinho|Centro Histórico|-12.973|-38.509|Conjunto de ruas e largos do Centro Histórico de Salvador.
+Salvador|BA|Farol da Barra|Barra|-13.010|-38.532|Farol no Forte de Santo Antônio da Barra.
+Salvador|BA|Mercado Modelo|Comércio|-12.974|-38.515|Mercado de artesanato na Cidade Baixa.
+Recife|PE|Marco Zero|Recife Antigo|-8.063|-34.871|Praça à beira do Capibaribe no Recife Antigo.
+Recife|PE|Instituto Ricardo Brennand|Várzea|-8.064|-34.963|Complexo cultural com museu e pinacoteca.
+Recife|PE|Parque Dona Lindu|Boa Viagem|-8.139|-34.902|Parque urbano com espaços de cultura e lazer.
+Olinda|PE|Alto da Sé|Sé|-8.014|-34.848|Mirante no sítio histórico de Olinda.
+Olinda|PE|Mosteiro de São Bento|Varadouro|-8.019|-34.852|Mosteiro beneditino no centro histórico.
+Olinda|PE|Convento de São Francisco|Carmo|-8.014|-34.845|Conjunto franciscano do sítio histórico.
+Fortaleza|CE|Centro Dragão do Mar de Arte e Cultura|Praia de Iracema|-3.722|-38.521|Centro cultural com espaços expositivos e planetário.
+Fortaleza|CE|Mercado Central de Fortaleza|Centro|-3.725|-38.526|Mercado de artesanato e produtos regionais.
+Fortaleza|CE|Praia do Futuro|Praia do Futuro|-3.756|-38.446|Praia urbana na costa leste de Fortaleza.
+Natal|RN|Forte dos Reis Magos|Praia do Forte|-5.756|-35.195|Fortificação na entrada da foz do Rio Potengi.
+Natal|RN|Parque das Dunas|Tirol|-5.804|-35.190|Unidade de conservação de dunas e Mata Atlântica.
+Natal|RN|Morro do Careca|Ponta Negra|-5.888|-35.167|Duna que marca a paisagem da Praia de Ponta Negra.
+Maceió|AL|Praia de Pajuçara|Pajuçara|-9.669|-35.711|Praia urbana conhecida pelas piscinas naturais.
+Maceió|AL|Praia de Ponta Verde|Ponta Verde|-9.664|-35.694|Trecho da orla urbana com calçadão.
+Maceió|AL|Museu Théo Brandão|Jaraguá|-9.674|-35.725|Museu de antropologia e folclore da Universidade Federal de Alagoas.
+João Pessoa|PB|Farol do Cabo Branco|Cabo Branco|-7.147|-34.796|Farol na área da Ponta do Seixas.
+João Pessoa|PB|Parque Solon de Lucena|Centro|-7.121|-34.876|Parque urbano em torno da Lagoa.
+João Pessoa|PB|Centro Cultural São Francisco|Centro Histórico|-7.115|-34.883|Conjunto barroco no centro histórico.
+Aracaju|SE|Orla de Atalaia|Atalaia|-10.987|-37.048|Orla urbana com áreas de lazer e caminhada.
+Aracaju|SE|Museu da Gente Sergipana|Centro|-10.913|-37.047|Museu dedicado à cultura de Sergipe.
+Aracaju|SE|Mercado Municipal Antônio Franco|Centro|-10.906|-37.051|Mercado tradicional com produtos regionais.
+São Luís|MA|Praça Benedito Leite|Centro Histórico|-2.529|-44.306|Praça no núcleo histórico de São Luís.
+São Luís|MA|Palácio dos Leões|Centro Histórico|-2.528|-44.306|Sede do governo maranhense no centro histórico.
+São Luís|MA|Teatro Arthur Azevedo|Centro Histórico|-2.531|-44.304|Teatro histórico na Rua do Sol.
+Belém|PA|Ver-o-Peso|Cidade Velha|-1.453|-48.504|Complexo de mercados na orla da Baía do Guajará.
+Belém|PA|Estação das Docas|Campina|-1.451|-48.502|Antigos armazéns portuários convertidos em espaço cultural.
+Belém|PA|Mangal das Garças|Cidade Velha|-1.461|-48.505|Parque na margem do Rio Guamá.
+Manaus|AM|Teatro Amazonas|Centro|-3.130|-60.024|Teatro histórico no Largo de São Sebastião.
+Manaus|AM|Mercado Municipal Adolpho Lisboa|Centro|-3.140|-60.025|Mercado histórico próximo à orla do Rio Negro.
+Manaus|AM|Museu da Amazônia|Cidade de Deus|-3.004|-59.941|Museu na Reserva Florestal Adolpho Ducke.
+Brasília|DF|Catedral Metropolitana de Brasília|Esplanada dos Ministérios|-15.798|-47.875|Catedral projetada por Oscar Niemeyer.
+Brasília|DF|Praça dos Três Poderes|Eixo Monumental|-15.800|-47.861|Praça cívica com as sedes dos três poderes.
+Brasília|DF|Parque da Cidade Sarah Kubitschek|Asa Sul|-15.807|-47.919|Parque urbano com pistas e áreas de lazer.
+Goiânia|GO|Praça Cívica|Setor Central|-16.681|-49.255|Conjunto cívico com edifícios em estilo art déco.
+Goiânia|GO|Parque Flamboyant|Jardim Goiás|-16.711|-49.237|Parque urbano com lago e trilhas de caminhada.
+Goiânia|GO|Bosque dos Buritis|Setor Oeste|-16.684|-49.261|Área verde próxima ao centro de Goiânia.
+Cuiabá|MT|Parque Mãe Bonifácia|Duque de Caxias|-15.583|-56.108|Parque estadual com trilhas em vegetação de Cerrado.
+Cuiabá|MT|Museu do Rio Cuiabá|Porto|-15.615|-56.109|Museu instalado no antigo Mercado do Peixe.
+Cuiabá|MT|Praça da República|Centro|-15.598|-56.097|Praça histórica em frente à Catedral Basílica.
+Belo Horizonte|MG|Igreja de São Francisco de Assis da Pampulha|Pampulha|-19.858|-43.978|Igreja do Conjunto Moderno da Pampulha.
+Belo Horizonte|MG|Mercado Central de Belo Horizonte|Centro|-19.923|-43.944|Mercado de gastronomia e produtos mineiros.
+Belo Horizonte|MG|Praça da Liberdade|Savassi|-19.932|-43.938|Praça cercada pelo Circuito Liberdade.
+Ouro Preto|MG|Praça Tiradentes|Centro Histórico|-20.386|-43.504|Praça central no núcleo histórico de Ouro Preto.
+Ouro Preto|MG|Museu da Inconfidência|Centro Histórico|-20.386|-43.504|Museu instalado na antiga Casa de Câmara e Cadeia.
+Ouro Preto|MG|Igreja de São Francisco de Assis|Centro Histórico|-20.386|-43.502|Igreja barroca ligada à obra de Aleijadinho.
+Curitiba|PR|Jardim Botânico de Curitiba|Jardim Botânico|-25.443|-49.238|Jardim com estufa de vidro e jardins geométricos.
+Curitiba|PR|Museu Oscar Niemeyer|Centro Cívico|-25.410|-49.267|Museu de arte, arquitetura e design.
+Curitiba|PR|Ópera de Arame|Pilarzinho|-25.384|-49.276|Teatro de estrutura metálica em uma antiga pedreira.
+Foz do Iguaçu|PR|Cataratas do Iguaçu|Parque Nacional do Iguaçu|-25.695|-54.436|Conjunto de quedas no Rio Iguaçu.
+Foz do Iguaçu|PR|Parque das Aves|Avenida das Cataratas|-25.615|-54.480|Centro dedicado à conservação de aves da Mata Atlântica.
+Foz do Iguaçu|PR|Marco das Três Fronteiras|Porto Meira|-25.590|-54.592|Mirante próximo ao encontro dos rios Iguaçu e Paraná.
+Gramado|RS|Lago Negro|Bairro Lago Negro|-29.394|-50.880|Lago cercado por jardins e caminhos.
+Gramado|RS|Rua Coberta|Centro|-29.378|-50.875|Passagem coberta próxima ao Palácio dos Festivais.
+Gramado|RS|Praça das Etnias|Centro|-29.382|-50.876|Praça com referências às comunidades que formaram a cidade.
+Porto Alegre|RS|Mercado Público de Porto Alegre|Centro Histórico|-30.027|-51.229|Mercado histórico no centro de Porto Alegre.
+Porto Alegre|RS|Parque Farroupilha|Bom Fim|-30.036|-51.218|Parque urbano também conhecido como Redenção.
+Porto Alegre|RS|Fundação Iberê Camargo|Cristal|-30.102|-51.246|Museu de arte às margens do Guaíba.
+Paraty|RJ|Centro Histórico de Paraty|Centro Histórico|-23.219|-44.714|Conjunto preservado de ruas e construções coloniais.
+Paraty|RJ|Casa da Cultura de Paraty|Centro Histórico|-23.219|-44.713|Centro cultural instalado em um casarão histórico.
+Paraty|RJ|Forte Defensor Perpétuo|Morro da Vila Velha|-23.211|-44.713|Fortificação com vista para a baía de Paraty.
+Vitória|ES|Praça do Papa|Enseada do Suá|-20.319|-40.287|Praça na orla com vista para a Baía de Vitória.
+Vitória|ES|Palácio Anchieta|Centro|-20.321|-40.341|Sede histórica do governo do Espírito Santo.
+Vitória|ES|Parque Pedra da Cebola|Mata da Praia|-20.275|-40.302|Parque urbano com formação rochosa característica.

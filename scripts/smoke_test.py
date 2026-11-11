@@ -29,8 +29,8 @@ def main():
     assert status == 200, f"City listing returned {status}"
     page = json.loads(body)
     assert page["page"]["size"] == 2
-    assert page["page"]["totalElements"] == 3
-    assert page["page"]["totalPages"] == 2
+    assert page["page"]["totalElements"] >= 25
+    assert page["page"]["totalPages"] >= 13
     assert "next" in page["_links"]
     next_url = page["_links"]["next"]["href"]
     next_path = next_url.removeprefix(base_url)
@@ -46,13 +46,13 @@ def main():
 
     status, _, body = request(base_url, "/places/search")
     assert status == 200
-    assert len(json.loads(body)) == 3
+    assert len(json.loads(body)) >= 69
     print("PASS: seeded places are searchable")
 
     status, _, body = request(base_url, "/places/search?q=Rio")
     assert status == 200
     places = json.loads(body)
-    assert len(places) == 2
+    assert len(places) >= 2
     for place in places:
         status, _, body = request(base_url, "/places/" + place["id"])
         assert status == 200

@@ -17,6 +17,7 @@ public class LoadDatabase {
     private static final Logger log = LoggerFactory.getLogger(LoadDatabase.class);
 
     @Bean
+    @org.springframework.core.annotation.Order(0)
     CommandLineRunner initDatabase(UserRepository userRepository, CityRepository cityRepository,
             InterestRepository interestRepository, LocalRepository localRepository,
             LocalInterestRepository localInterestRepository, TripRepository tripRepository,

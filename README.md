@@ -22,7 +22,7 @@ Encerrar a aplicação antes de reconstruir o JAR em uso. A porta padrão sem ar
 - Swagger UI: `http://localhost:18080/swagger-ui/index.html`
 - OpenAPI: `http://localhost:18080/v3/api-docs`
 
-A configuração atual cria H2 em memória e LoadDatabase insere três usuários, três cidades e três lugares, além de associações de demonstração. Reiniciar apaga as alterações e recria o catálogo. Isso é comportamento atual, não persistência de produção ou de cobrança já resolvida. As URLs ilustrativas de imagens e os dados de exemplo precisam de curadoria antes da apresentação final.
+A configuração local usa H2 em memória e recria os dados a cada inicialização. O catálogo inicial reúne 25 cidades e 69 locais. `LoadDatabase` cria os registros iniciais em um banco vazio e `BrazilCatalog` acrescenta os destinos de `src/main/resources/catalog/brazil.txt`, preservando os registros existentes e evitando duplicatas.
 
 ## Verificação existente
 
@@ -101,7 +101,7 @@ Configure no ambiente da API, usando os valores do mesmo sandbox:
 | `STRIPE_RETURN_URL` | URL HTTPS pública da API terminando em `/billing/stripe/return` |
 | `SPRING_PROFILES_ACTIVE` | `stripe-sandbox` para preservar os vínculos e eventos em H2 em arquivo |
 
-Configure o Payment Link com um único preço recorrente mensal, sem teste grátis, e aponte o redirecionamento pós-pagamento para a mesma URL de retorno. Habilite o Customer Portal no sandbox. No Stripe, habilite a opção de limitar assinaturas ativas duplicadas no Checkout e no Payment Link. Um link estático pode ser reaberto fora do app. O servidor protege a associação à conta, mas a configuração no Stripe é necessária para barrar cobranças repetidas no link hospedado.
+Configure o Payment Link com um único preço recorrente mensal, sem teste grátis, e aponte o redirecionamento pós-pagamento para a mesma URL de retorno. Habilite o Customer Portal e permita o cancelamento de assinaturas no sandbox. Escolha no portal se o cancelamento será imediato ou ao fim do período. Na segunda opção, o Premium continua disponível até o fim do período pago. No Stripe, habilite a opção de limitar assinaturas ativas duplicadas no Checkout e no Payment Link. Um link estático pode ser reaberto fora do app. O servidor protege a associação à conta, mas a configuração no Stripe é necessária para barrar cobranças repetidas no link hospedado.
 
 Envie eventos de teste para `POST /billing/stripe/webhook`. Selecione `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.paid` e `invoice.payment_failed`. Para teste local, o Stripe CLI pode encaminhar os eventos para `localhost:18080/billing/stripe/webhook`. Use o segredo informado pelo CLI nesse caso. Inicie o pagamento pelo app e informe no Stripe o mesmo e-mail da sua conta Viajá. O link avulso não contém a referência da conta.
 

@@ -69,6 +69,7 @@ public class LocalController {
                 new ArrayList<>()
         );
         response.setDescription(local.getDescription());
+        response.setWebsite(local.getWebsite());
         return response;
     }
 
