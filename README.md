@@ -45,21 +45,8 @@ Para verificar o catálogo, o login e os fluxos de salvos, viagens e paradas, ro
 
 ## Assinaturas no Stripe Sandbox
 
-O app pede à API o link de pagamento ou a sessão do portal de assinaturas e abre a página do Stripe no navegador. Depois do pagamento, a página de retorno reabre o app. O status da assinatura vem da API, que valida os eventos recebidos pelo webhook do Stripe.
+O Android abre o pagamento e o portal de assinaturas no navegador. A API recebe os eventos do Stripe, confere o pagamento e informa ao app se o Premium está ativo.
 
-Para testar esse fluxo, configure as variáveis abaixo com valores do mesmo sandbox:
+Para testar, use um Payment Link mensal de teste e habilite o Customer Portal no mesmo sandbox. Na API, configure `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PAYMENT_LINK_ID`, `STRIPE_PRICE_ID` e `STRIPE_RETURN_URL`. A URL de retorno deve ser pública, usar HTTPS e terminar em `/billing/stripe/return`. Ative o perfil `stripe-sandbox` com `SPRING_PROFILES_ACTIVE` para guardar os vínculos em `data/`.
 
-| Variável | Valor |
-| --- | --- |
-| `STRIPE_SECRET_KEY` | Chave secreta de teste |
-| `STRIPE_WEBHOOK_SECRET` | Segredo usado para verificar a assinatura dos eventos |
-| `STRIPE_PAYMENT_LINK_ID` | ID do Payment Link |
-| `STRIPE_PRICE_ID` | ID do preço mensal associado ao link |
-| `STRIPE_RETURN_URL` | URL HTTPS pública da API terminada em `/billing/stripe/return` |
-| `SPRING_PROFILES_ACTIVE` | `stripe-sandbox`, que guarda os dados em H2 no diretório `data/` |
-
-No Stripe, configure o Payment Link com um único preço mensal, sem período grátis, e use a URL de retorno como destino após o pagamento. Habilite o cancelamento no Customer Portal e a limitação de assinaturas ativas duplicadas no Checkout e no Payment Link.
-
-Envie para `POST /billing/stripe/webhook` os eventos `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.paid` e `invoice.payment_failed`. Em testes locais, o Stripe CLI pode encaminhar esses eventos para `localhost:18080/billing/stripe/webhook`. Nesse caso, use o segredo fornecido pelo CLI.
-
-Inicie o pagamento pelo app para que a API possa associá-lo à sua conta e use o mesmo e-mail no Stripe e no Viajá. Se hospedar o ambiente de testes, mantenha o diretório `data/` em armazenamento persistente para conservar os vínculos e eventos entre reinícios.
+Aponte os eventos de checkout, assinatura e fatura para `POST /billing/stripe/webhook`. Comece o pagamento pelo app e use no Stripe o mesmo e-mail da conta Viajá.
