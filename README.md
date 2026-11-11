@@ -1,60 +1,37 @@
 # Viajá API
 
-Backend Java/Spring Boot do Viajá. Mantém o padrão acadêmico de controllers, repositories JPA, assemblers HATEOAS, paginação, Swagger e carga inicial. Referência da disciplina: `/Users/rafa/IdeaProjects/corp-financial-api`.
+A API do Viajá é o servidor do app Android. Ela responde às buscas no catálogo de destinos, autentica quem entra no app e guarda os lugares salvos e os roteiros de cada conta. [Repositório do app Android](https://github.com/ProjetoIntegrador-4Semestre/ViaJa).
 
-## Documentação do projeto
+O servidor usa Java e Spring Boot. Os dados são acessados via Spring Data JPA e, no ambiente local padrão, ficam em um banco H2 em memória. Ao iniciar com o banco vazio, a API carrega cidades, lugares e uma conta de demonstração para que o app possa ser testado logo depois de instalado.
 
-Produto, planos e telas: [referência de produto](</Users/rafa/AndroidStudioProjects/Viaja/docs/product-baseline.md>). Estrutura/dados: [arquitetura](</Users/rafa/AndroidStudioProjects/Viaja/docs/architecture.md>). Funcionalidades verificadas e falhas abertas: [estado da implementação](</Users/rafa/AndroidStudioProjects/Viaja/docs/status.md>). O [índice](</Users/rafa/AndroidStudioProjects/Viaja/docs/README.md>) indica o papel de cada arquivo.
+## Recursos usados pelo app
 
-Esses caminhos são locais aos checkouts informados pelo responsável. Em outra máquina, consultar os mesmos caminhos `docs/` no repositório Android. Não duplicar neste README o escopo, a matriz de preços ou o planejamento das telas.
+| Recurso | Rotas principais |
+| --- | --- |
+| Cadastro e login | `POST /auth/signup` e `POST /auth/login` |
+| Conta | `/users/{id}` |
+| Cidades e lugares | `GET /cities`, `GET /places/search?q=...` e `GET /places/{id}` |
+| Lugares salvos | `/users/{userId}/saved-locals` |
+| Viagens e notas | `/trips` e `/trips/{tripId}/notes` |
+| Paradas do roteiro | `/trip-locals` |
+| Assinatura em ambiente de testes | `/billing/stripe` |
 
-## Execução local
+O app usa o JWT devolvido no cabeçalho `Authorization` do login para acessar dados privados. Conta, lugares salvos, viagens, paradas e notas são vinculados ao usuário autenticado. A lista de paradas de uma viagem fica em `GET /trip-locals/trip/{tripId}`. Para atualizar o horário e a conclusão de uma parada, use `PUT /trip-locals/{tripId}/{localId}/schedule`, com `scheduledTime` no formato `HH:mm` e `completed` como booleano. Para limpar o horário, envie `null` em `scheduledTime` ou omita esse campo.
 
-Usar JDK compatível com o `pom.xml` (Java 17 ou superior) e o Maven Wrapper:
+As rotas começam diretamente pelo nome do recurso. Coleções como cidades, viagens e lugares salvos usam HAL, com os itens em `_embedded`. A busca de lugares e a lista de paradas retornam listas JSON simples. Nos resultados da busca e no detalhe de um lugar, o preço é informado em centavos.
+
+## Como rodar localmente
+
+Com JDK 17 ou superior, execute na raiz do repositório:
 
 ```sh
 ./mvnw verify
 java -jar target/api-viaja-0.0.1-SNAPSHOT.jar --server.port=18080
 ```
 
-Encerrar a aplicação antes de reconstruir o JAR em uso. A porta padrão sem argumento é 8080; os testes desta recuperação usam 18080.
+O primeiro comando compila, testa e empacota o projeto. O segundo inicia a API na porta 18080, usada também nas instruções do app e no script de verificação. Sem o argumento `--server.port`, a API usa a porta 8080. No perfil padrão, os dados locais são recriados a cada inicialização.
 
-- Swagger UI: `http://localhost:18080/swagger-ui/index.html`
-- OpenAPI: `http://localhost:18080/v3/api-docs`
-
-A configuração local usa H2 em memória e recria os dados a cada inicialização. O catálogo inicial reúne 25 cidades e 69 locais. `LoadDatabase` cria os registros iniciais em um banco vazio e `BrazilCatalog` acrescenta os destinos de `src/main/resources/catalog/brazil.txt`, preservando os registros existentes e evitando duplicatas.
-
-## Verificação existente
-
-Com uma instância local recém-iniciada:
-
-```sh
-python3 scripts/smoke_test.py
-```
-
-`--base-url` altera o endereço consultado. A verificação espera contagens e registros iniciais; ela cria e remove vínculos/viagens de demonstração. Não executar em um banco de usuários reais. O script não imprime JWTs.
-
-As verificações cobrem catálogo, paginação, OpenAPI, login, sessão, salvos, viagens, paradas e privacidade da conta. Incluem testes de acesso cruzado nos recursos já protegidos. `mvnw verify` compila e empacota a API. O script verifica as respostas HTTP de uma instância em execução.
-
-## Contratos usados pelo Android
-
-Não existe prefixo `/api` nos caminhos abaixo. Swagger precisa de revisão de exemplos; o código e a resposta executada prevalecem quando houver divergência.
-
-| Recurso | Contrato relevante |
-| --- | --- |
-| Login | `POST /auth/login`, corpo `email`/`senha`; JWT em `Authorization` no header da resposta, usuário no JSON |
-| Conta própria | `GET /users` lista apenas a conta autenticada; `GET/PUT/DELETE /users/{id}` conferem proprietário e não expõem hash; `POST /users` não está disponível |
-| Cadastro | `POST /auth/signup`, corpo `name`/`email`/`senha` |
-| Cidades | `GET /cities`, HAL, coleção `_embedded.cityList` |
-| Lugares | `GET /places/search?q=` retorna lista simples; `GET /places/{id}` expõe os mesmos campos mais links |
-| Viagens | `GET /trips` e `/trips/user/{userId}`, HAL em `_embedded.trips`; detalhe/criação/edição usam Trip com links |
-| Paradas | `/trip-locals`; lista simples ordenada em `/trip-locals/trip/{tripId}`; detalhe/mutações por viagem/lugar |
-| Notas e memos | `/trips/{tripId}/notes` e `/trip-memos` exigem a conta proprietária. A coleção de memos retorna apenas registros das viagens da conta. |
-| Salvos | `/users/{userId}/saved-locals`, HAL em `_embedded.savedLocals`; `/{localId}` usa o ID do lugar |
-
-Para ajustar o horário ou a conclusão de uma parada, use `PUT /trip-locals/{tripId}/{localId}/schedule` com `{"scheduledTime":"09:30","completed":false}`. O horário é local, no formato de 24 horas `HH:mm`. Envie `null` ou omita o horário para limpá-lo. O campo `completed` é obrigatório nessa rota. Paradas anteriores são lidas com horário ausente e como pendentes. O PUT de dia, ordem e nota preserva esses dois campos.
-
-A conta local de demonstração é `rafael@email.com`, senha `senha123`.
+Com o servidor em execução, abra [Swagger UI](http://localhost:18080/swagger-ui/index.html) para explorar as rotas ou consulte o [documento OpenAPI](http://localhost:18080/v3/api-docs). Para testar o login com a conta de demonstração:
 
 ```sh
 curl -i http://localhost:18080/auth/login \
@@ -62,47 +39,27 @@ curl -i http://localhost:18080/auth/login \
   -d '{"email":"rafael@email.com","senha":"senha123"}'
 ```
 
-O login retorna 200. Use o valor completo `Bearer ...` do header `Authorization` nas consultas privadas. Dados de login ausentes retornam 400. Credenciais incorretas ou acesso privado sem token válido retornam 401. Uma conta autenticada sem permissão recebe 403 nos recursos com controle de proprietário. Recursos inexistentes retornam 404 quando a requisição chega ao roteamento, e `GET /auth/login` retorna 405.
+Use o valor completo `Bearer ...` retornado em `Authorization` para chamar as rotas privadas.
 
-Na leitura de lugares, `id` é textual e `price` é inteiro em centavos; descrição está incluída. A coleção paginada e a escrita `/places` ainda usam Local, um contrato diferente. Criação de viagem recebe nome/cidade/modo, datas e orçamento opcionais; proprietário vem do JWT. Sucesso retorna 201/Location. Excluir retorna 204 sem corpo. Salvos duplicados e lugares inexistentes são rejeitados com 400; associações ausentes retornam 404.
+Para verificar o catálogo, o login e os fluxos de salvos, viagens e paradas, rode `python3 scripts/smoke_test.py` com uma instância local recém-iniciada. O script depende dos dados iniciais e cria e remove registros de demonstração. Use `--base-url` para apontar para outra instância de teste.
 
-Salvos, viagens, paradas, notas, memos e conta própria conferem proprietário. Isso não significa autorização completa dos demais recursos. Exclusão de viagem remove memos, notas, paradas e mídia de viagem na mesma transação; a exclusão isolada de uma parada com memos ainda precisa de tratamento.
+## Assinaturas no Stripe Sandbox
 
-## Android local e hospedagem
+O app pede à API o link de pagamento ou a sessão do portal de assinaturas e abre a página do Stripe no navegador. Depois do pagamento, a página de retorno reabre o app. O status da assinatura vem da API, que valida os eventos recebidos pelo webhook do Stripe.
 
-O caminho que foi verificado no emulador usa encaminhamento de porta:
-
-```sh
-adb reverse tcp:18080 tcp:18080
-```
-
-No repositório Android, compilar debug com `-PapiBaseUrl=http://127.0.0.1:18080/`. Roteamento direto por `10.0.2.2` não foi suficiente na sessão verificada. A API hospedada não recebeu os contratos atuais durante esta recuperação; não confundir execução local com deploy concluído.
-
-## Cobrança e segurança pendentes
-
-Stripe test Checkout/webhooks é direção confirmada, não integração existente. Planos, quotas e política de acesso ficam na referência de produto. O CRUD atual de Subscription não pode se tornar autoridade para conceder Premium; faltam persistência durável, identificação do cliente/assinatura e controle de eventos. Não usar dados fictícios de assinatura como confirmação Stripe.
-
-A exposição de hash e o acesso cruzado de UserController foram corrigidos localmente. O estado da implementação ainda registra acesso cruzado em outros recursos e escrita pública no catálogo. A publicação precisa de configuração própria para o console H2, a chave de assinatura JWT e os dados de demonstração.
-
-`HELP.md` é template gerado pelo Spring e está ignorado no Git; não contém regras do Viajá. Os documentos antigos de UUID/PostgreSQL/rotas `/api` foram classificados e preservados na revisão documental, não aplicados como migração.
-
-## Stripe Sandbox
-
-A integração usa o Payment Link hospedado de assinatura, um webhook assinado e sessões do Customer Portal. O Android consulta `GET /billing/stripe/subscription` e pede as URLs com `POST /billing/stripe/checkout` ou `POST /billing/stripe/portal`. O status desse fluxo é separado do CRUD acadêmico de assinaturas.
-
-Configure no ambiente da API, usando os valores do mesmo sandbox:
+Para testar esse fluxo, configure as variáveis abaixo com valores do mesmo sandbox:
 
 | Variável | Valor |
 | --- | --- |
-| `STRIPE_SECRET_KEY` | Chave secreta de teste do servidor |
-| `STRIPE_WEBHOOK_SECRET` | Segredo de assinatura do destino de eventos, prefixo `whsec_` |
-| `STRIPE_PAYMENT_LINK_ID` | ID do link de assinatura, prefixo `plink_` |
-| `STRIPE_PRICE_ID` | ID do preço recorrente usado no link, prefixo `price_` |
-| `STRIPE_RETURN_URL` | URL HTTPS pública da API terminando em `/billing/stripe/return` |
-| `SPRING_PROFILES_ACTIVE` | `stripe-sandbox` para preservar os vínculos e eventos em H2 em arquivo |
+| `STRIPE_SECRET_KEY` | Chave secreta de teste |
+| `STRIPE_WEBHOOK_SECRET` | Segredo usado para verificar a assinatura dos eventos |
+| `STRIPE_PAYMENT_LINK_ID` | ID do Payment Link |
+| `STRIPE_PRICE_ID` | ID do preço mensal associado ao link |
+| `STRIPE_RETURN_URL` | URL HTTPS pública da API terminada em `/billing/stripe/return` |
+| `SPRING_PROFILES_ACTIVE` | `stripe-sandbox`, que guarda os dados em H2 no diretório `data/` |
 
-Configure o Payment Link com um único preço recorrente mensal, sem teste grátis, e aponte o redirecionamento pós-pagamento para a mesma URL de retorno. Habilite o Customer Portal e permita o cancelamento de assinaturas no sandbox. Escolha no portal se o cancelamento será imediato ou ao fim do período. Na segunda opção, o Premium continua disponível até o fim do período pago. No Stripe, habilite a opção de limitar assinaturas ativas duplicadas no Checkout e no Payment Link. Um link estático pode ser reaberto fora do app. O servidor protege a associação à conta, mas a configuração no Stripe é necessária para barrar cobranças repetidas no link hospedado.
+No Stripe, configure o Payment Link com um único preço mensal, sem período grátis, e use a URL de retorno como destino após o pagamento. Habilite o cancelamento no Customer Portal e a limitação de assinaturas ativas duplicadas no Checkout e no Payment Link.
 
-Envie eventos de teste para `POST /billing/stripe/webhook`. Selecione `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.paid` e `invoice.payment_failed`. Para teste local, o Stripe CLI pode encaminhar os eventos para `localhost:18080/billing/stripe/webhook`. Use o segredo informado pelo CLI nesse caso. Inicie o pagamento pelo app e informe no Stripe o mesmo e-mail da sua conta Viajá. O link avulso não contém a referência da conta.
+Envie para `POST /billing/stripe/webhook` os eventos `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.paid` e `invoice.payment_failed`. Em testes locais, o Stripe CLI pode encaminhar esses eventos para `localhost:18080/billing/stripe/webhook`. Nesse caso, use o segredo fornecido pelo CLI.
 
-A página de retorno só reabre o app. O backend confere assinatura do evento, ambiente de teste, link, referência da conta e preço. O app consulta o status ao retornar e permite atualizar manualmente. O perfil `stripe-sandbox` mantém o banco no diretório local `data/`. Ao hospedar a API, monte esse diretório em armazenamento persistente para manter os dados entre reinícios.
+Inicie o pagamento pelo app para que a API possa associá-lo à sua conta e use o mesmo e-mail no Stripe e no Viajá. Se hospedar o ambiente de testes, mantenha o diretório `data/` em armazenamento persistente para conservar os vínculos e eventos entre reinícios.
