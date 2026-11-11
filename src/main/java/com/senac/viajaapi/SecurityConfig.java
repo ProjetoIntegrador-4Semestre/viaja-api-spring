@@ -38,6 +38,8 @@ public class SecurityConfig {
                 .exceptionHandling(errors -> errors.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
                 .authorizeHttpRequests(auth -> auth
                         .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/billing/stripe/webhook").permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/billing/stripe/return").permitAll()
                         .requestMatchers("/auth/login", "/auth/signup").permitAll()
                         .requestMatchers("/places/search", "/places/**", "/cities/**", "/interests/**", "/medias/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html", "/h2-console/**").permitAll()

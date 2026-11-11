@@ -85,3 +85,24 @@ Stripe test Checkout/webhooks é direção confirmada, não integração existen
 A exposição de hash e o acesso cruzado de UserController foram corrigidos localmente. O estado da implementação ainda registra acesso cruzado em outros recursos e escrita pública no catálogo. A publicação precisa de configuração própria para o console H2, a chave de assinatura JWT e os dados de demonstração.
 
 `HELP.md` é template gerado pelo Spring e está ignorado no Git; não contém regras do Viajá. Os documentos antigos de UUID/PostgreSQL/rotas `/api` foram classificados e preservados na revisão documental, não aplicados como migração.
+
+## Stripe Sandbox
+
+A integração usa o Payment Link hospedado de assinatura, um webhook assinado e sessões do Customer Portal. O Android consulta `GET /billing/stripe/subscription` e pede as URLs com `POST /billing/stripe/checkout` ou `POST /billing/stripe/portal`. O status desse fluxo é separado do CRUD acadêmico de assinaturas.
+
+Configure no ambiente da API, usando os valores do mesmo sandbox:
+
+| Variável | Valor |
+| --- | --- |
+| `STRIPE_SECRET_KEY` | Chave secreta de teste do servidor |
+| `STRIPE_WEBHOOK_SECRET` | Segredo de assinatura do destino de eventos, prefixo `whsec_` |
+| `STRIPE_PAYMENT_LINK_ID` | ID do link de assinatura, prefixo `plink_` |
+| `STRIPE_PRICE_ID` | ID do preço recorrente usado no link, prefixo `price_` |
+| `STRIPE_RETURN_URL` | URL HTTPS pública da API terminando em `/billing/stripe/return` |
+| `SPRING_PROFILES_ACTIVE` | `stripe-sandbox` para preservar os vínculos e eventos em H2 em arquivo |
+
+Configure o Payment Link com um único preço recorrente mensal, sem teste grátis, e aponte o redirecionamento pós-pagamento para a mesma URL de retorno. Habilite o Customer Portal no sandbox. No Stripe, habilite a opção de limitar assinaturas ativas duplicadas no Checkout e no Payment Link. Um link estático pode ser reaberto fora do app. O servidor protege a associação à conta, mas a configuração no Stripe é necessária para barrar cobranças repetidas no link hospedado.
+
+Envie eventos de teste para `POST /billing/stripe/webhook`. Selecione `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.paid` e `invoice.payment_failed`. Para teste local, o Stripe CLI pode encaminhar os eventos para `localhost:18080/billing/stripe/webhook`. Use o segredo informado pelo CLI nesse caso. Inicie o pagamento pelo app e informe no Stripe o mesmo e-mail da sua conta Viajá. O link avulso não contém a referência da conta.
+
+A página de retorno só reabre o app. O backend confere assinatura do evento, ambiente de teste, link, referência da conta e preço. O app consulta o status ao retornar e permite atualizar manualmente. O perfil `stripe-sandbox` mantém o banco no diretório local `data/`. Ao hospedar a API, monte esse diretório em armazenamento persistente para manter os dados entre reinícios.

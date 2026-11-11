@@ -26,6 +26,7 @@ public class LoadDatabase {
             TripNoteRepository tripNoteRepository, PasswordEncoder passwordEncoder) {
 
         return args -> {
+            if (userRepository.count() != 0) return;
             LocalDateTime now = LocalDateTime.now();
 
             User rafael = new User("Rafael Reis", "rafael@email.com",
