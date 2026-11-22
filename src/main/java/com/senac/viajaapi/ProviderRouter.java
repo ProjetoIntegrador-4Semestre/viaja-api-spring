@@ -28,6 +28,12 @@ public class ProviderRouter {
     }
 
     public Optional<PlaceResponse> getById(String id) {
+        if (id != null && id.matches("\\d+")) return provider(LocalSource.MOCK).getById(id);
+        int separator = id == null ? -1 : id.indexOf(':');
+        if (separator > 0 && separator < id.length() - 1) {
+            LocalSource source = LocalSource.fromValue(id.substring(0, separator));
+            return provider(source).getById(id.substring(separator + 1));
+        }
         return provider(defaultSource).getById(id);
     }
 

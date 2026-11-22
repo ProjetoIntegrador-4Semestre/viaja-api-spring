@@ -30,7 +30,7 @@ class GooglePlaceMapperTest {
 
         PlaceResponse result = new GooglePlaceMapper().toResponse(place);
 
-        assertThat(result.getId()).isEqualTo("google-place-id");
+        assertThat(result.getId()).isEqualTo("google:google-place-id");
         assertThat(result.getSource()).isEqualTo("google");
         assertThat(result.getPrice()).isNull();
         assertThat(result.getPriceHint()).isEqualTo("$$");

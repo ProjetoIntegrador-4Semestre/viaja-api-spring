@@ -10,7 +10,7 @@ public class GooglePlaceMapper {
 
     public PlaceResponse toResponse(GooglePlace place) {
         PlaceResponse response = new PlaceResponse(
-                place.id(),
+                LocalSource.GOOGLE.value() + ":" + place.id(),
                 LocalSource.GOOGLE.value(),
                 place.id(),
                 place.displayName() == null ? "" : place.displayName().text(),
