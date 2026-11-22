@@ -4,6 +4,8 @@ A API do Viajá é o servidor do app Android. Ela responde às buscas no catálo
 
 O servidor usa Java e Spring Boot. Os dados são acessados via Spring Data JPA e, no ambiente local padrão, ficam em um banco H2 em memória. Ao iniciar com o banco vazio, a API carrega cidades, lugares e uma conta de demonstração para que o app possa ser testado logo depois de instalado.
 
+Os lugares usam um modelo comum para qualquer origem de dados. O catálogo demonstrativo é servido pelo provider `mock`, selecionado por padrão. A variável `VIAJA_LOCALS_PROVIDER` permite escolher outro provider disponível sem mudar os contratos consumidos pelo app.
+
 ## Recursos usados pelo app
 
 | Recurso | Rotas principais |

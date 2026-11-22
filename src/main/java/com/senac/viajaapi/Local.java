@@ -5,6 +5,8 @@ import java.time.LocalDateTime;
 import java.util.Objects;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -48,7 +50,8 @@ public class Local {
 
     private String website;
 
-    private String source;
+    @Enumerated(EnumType.STRING)
+    private LocalSource source;
 
     @Column(name = "source_id")
     private String sourceId;
@@ -79,7 +82,7 @@ public class Local {
         this.description = description;
         this.phone = phone;
         this.website = website;
-        this.source = source;
+        this.source = LocalSource.fromValue(source);
         this.sourceId = sourceId;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
@@ -113,8 +116,8 @@ public class Local {
     public void setPhone(String phone) { this.phone = phone; }
     public String getWebsite() { return website; }
     public void setWebsite(String website) { this.website = website; }
-    public String getSource() { return source; }
-    public void setSource(String source) { this.source = source; }
+    public LocalSource getSource() { return source; }
+    public void setSource(LocalSource source) { this.source = source; }
     public String getSourceId() { return sourceId; }
     public void setSourceId(String sourceId) { this.sourceId = sourceId; }
     public LocalDateTime getCreatedAt() { return createdAt; }

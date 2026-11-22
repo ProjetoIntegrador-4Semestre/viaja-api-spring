@@ -1,9 +1,9 @@
 package com.senac.viajaapi;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
-import java.util.stream.Collectors;
+
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -38,60 +38,23 @@ import jakarta.validation.Valid;
 public class LocalController {
 
     private final LocalRepository repository;
-    private final CityRepository cityRepository;
+    private final ProviderRouter providerRouter;
     private final LocalModelAssembler assembler;
     private final org.springframework.data.web.PagedResourcesAssembler<Local> pagedResourcesAssembler;
 
-    public LocalController(LocalRepository repository, CityRepository cityRepository, LocalModelAssembler assembler,
+    public LocalController(LocalRepository repository, ProviderRouter providerRouter, LocalModelAssembler assembler,
             org.springframework.data.web.PagedResourcesAssembler<Local> pagedResourcesAssembler) {
         this.repository = repository;
-        this.cityRepository = cityRepository;
+        this.providerRouter = providerRouter;
         this.assembler = assembler;
         this.pagedResourcesAssembler = pagedResourcesAssembler;
-    }
-
-    private PlaceResponse toPlaceResponse(Local local) {
-        PlaceResponse response = new PlaceResponse(
-                String.valueOf(local.getId()),
-                local.getSource(),
-                local.getSourceId(),
-                local.getName(),
-                local.getAddress(),
-                local.getLat() == null ? null : local.getLat().doubleValue(),
-                local.getLng() == null ? null : local.getLng().doubleValue(),
-                local.getType() == null ? List.of() : List.of(local.getType()),
-                local.getRating(),
-                local.getRatingCount(),
-                local.getPrice(),
-                null,
-                null,
-                null,
-                new ArrayList<>()
-        );
-        response.setDescription(local.getDescription());
-        response.setWebsite(local.getWebsite());
-        return response;
     }
 
     @Operation(summary = "Buscar lugares por texto", description = "Busca lugares pelo nome, endereco ou cidade, retornando uma lista simples (nao paginada) compatível com consumidores REST. Utiliza filtro contendo (contains) ignorando maiusculas/minusculas.")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Lista de lugares encontrados")
     @GetMapping("/search")
     public List<PlaceResponse> searchPlaces(@Parameter(description = "Texto livre para busca no nome ou endereço do lugar") @RequestParam(required = false) String q) {
-        List<Local> locais;
-        if (q == null || q.isBlank()) {
-            locais = repository.findAll();
-        } else {
-            String term = q.trim().toLowerCase(Locale.ROOT);
-            List<Long> cityIds = cityRepository.findAll().stream()
-                    .filter(city -> city.getName().toLowerCase(Locale.ROOT).contains(term))
-                    .map(City::getId).toList();
-            locais = repository.findAll().stream()
-                    .filter(l -> l.getName().toLowerCase(Locale.ROOT).contains(term)
-                            || (l.getAddress() != null && l.getAddress().toLowerCase(Locale.ROOT).contains(term))
-                            || cityIds.contains(l.getCityId()))
-                    .collect(Collectors.toList());
-        }
-        return locais.stream().map(this::toPlaceResponse).collect(Collectors.toList());
+        return providerRouter.search(new LocalSearchRequest(q));
     }
 
     @Operation(summary = "Listar lugares", description = "Retorna lista paginada de lugares cadastrados no sistema. Use page, size e sort para controlar a paginacao e ordenacao.")
@@ -109,9 +72,11 @@ public class LocalController {
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Lugar nao encontrado para o id informado")
     @GetMapping("/{id}")
     public EntityModel<PlaceResponse> getPlaceById(@Parameter(description = "Identificador numerico do lugar") @PathVariable Long id) {
-        Local local = repository.findById(id)
+        PlaceResponse place = providerRouter.getById(String.valueOf(id))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Lugar nao encontrado com ID: " + id));
-        return EntityModel.of(toPlaceResponse(local), assembler.toModel(local).getLinks());
+        return EntityModel.of(place,
+                linkTo(methodOn(LocalController.class).getPlaceById(id)).withSelfRel(),
+                linkTo(methodOn(LocalController.class).getAllPlaces(Pageable.unpaged())).withRel("places"));
     }
 
     @Operation(summary = "Criar lugar", description = "Cadastra um novo lugar no sistema, vinculando a uma cidade existente e definindo categoria, preco, avaliacao e fonte de dados.")

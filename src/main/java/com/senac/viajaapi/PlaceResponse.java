@@ -18,6 +18,8 @@ public class PlaceResponse {
     private Integer price;
     private String description;
     private String website;
+    private String phone;
+    private String openingHours;
     private String priceHint;
     private String photoUrl;
     private Boolean openNow;
@@ -70,6 +72,10 @@ public class PlaceResponse {
     public void setPrice(Integer price) { this.price = price; }
     public String getWebsite() { return website; }
     public void setWebsite(String website) { this.website = website; }
+    public String getPhone() { return phone; }
+    public void setPhone(String phone) { this.phone = phone; }
+    public String getOpeningHours() { return openingHours; }
+    public void setOpeningHours(String openingHours) { this.openingHours = openingHours; }
 
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
