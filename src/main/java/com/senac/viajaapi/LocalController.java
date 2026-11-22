@@ -57,6 +57,27 @@ public class LocalController {
         return providerRouter.search(new LocalSearchRequest(q));
     }
 
+    @Operation(summary = "Buscar lugares próximos", description = "Busca lugares ao redor de uma coordenada usando o provider configurado.")
+    @GetMapping("/nearby")
+    public List<PlaceResponse> searchNearby(
+            @RequestParam double lat,
+            @RequestParam double lng,
+            @RequestParam(defaultValue = "5000") double radius,
+            @RequestParam(required = false) String type) {
+        return providerRouter.searchNearby(new NearbySearchRequest(lat, lng, radius, type));
+    }
+
+    @Operation(summary = "Obter foto de um lugar", description = "Redireciona para a mídia resolvida pelo provider sem expor credenciais do servidor.")
+    @GetMapping("/photos")
+    public ResponseEntity<Void> getPhoto(
+            @RequestParam String name,
+            @RequestParam(defaultValue = "1600") int maxWidthPx) {
+        if (maxWidthPx < 1 || maxWidthPx > 4800) throw new IllegalArgumentException("Photo width must be between 1 and 4800 pixels");
+        return providerRouter.resolvePhoto(name, maxWidthPx)
+                .map(uri -> ResponseEntity.status(HttpStatus.FOUND).location(uri).<Void>build())
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
     @Operation(summary = "Listar lugares", description = "Retorna lista paginada de lugares cadastrados no sistema. Use page, size e sort para controlar a paginacao e ordenacao.")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Lista paginada de lugares com links HATEOAS")
     @GetMapping
@@ -71,8 +92,8 @@ public class LocalController {
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Lugar encontrado")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Lugar nao encontrado para o id informado")
     @GetMapping("/{id}")
-    public EntityModel<PlaceResponse> getPlaceById(@Parameter(description = "Identificador numerico do lugar") @PathVariable Long id) {
-        PlaceResponse place = providerRouter.getById(String.valueOf(id))
+    public EntityModel<PlaceResponse> getPlaceById(@Parameter(description = "Identificador do lugar no provider configurado") @PathVariable String id) {
+        PlaceResponse place = providerRouter.getById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Lugar nao encontrado com ID: " + id));
         return EntityModel.of(place,
                 linkTo(methodOn(LocalController.class).getPlaceById(id)).withSelfRel(),

@@ -14,7 +14,7 @@ public class LocalModelAssembler implements RepresentationModelAssembler<Local, 
     @Override
     public EntityModel<Local> toModel(Local local) {
         return EntityModel.of(local,
-                linkTo(methodOn(LocalController.class).getPlaceById(local.getId())).withSelfRel(),
+                linkTo(methodOn(LocalController.class).getPlaceById(String.valueOf(local.getId()))).withSelfRel(),
                 linkTo(methodOn(LocalController.class).getAllPlaces(Pageable.unpaged())).withRel("places"));
     }
 }

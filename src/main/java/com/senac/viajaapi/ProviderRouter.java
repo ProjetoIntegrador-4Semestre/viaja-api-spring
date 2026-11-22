@@ -1,5 +1,6 @@
 package com.senac.viajaapi;
 
+import java.net.URI;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
@@ -28,6 +29,14 @@ public class ProviderRouter {
 
     public Optional<PlaceResponse> getById(String id) {
         return provider(defaultSource).getById(id);
+    }
+
+    public List<PlaceResponse> searchNearby(NearbySearchRequest request) {
+        return provider(defaultSource).searchNearby(request);
+    }
+
+    public Optional<URI> resolvePhoto(String photoName, int maxWidthPx) {
+        return provider(defaultSource).resolvePhoto(photoName, maxWidthPx);
     }
 
     public LocalProvider provider(LocalSource source) {

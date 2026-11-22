@@ -20,6 +20,8 @@ public class PlaceResponse {
     private String website;
     private String phone;
     private String openingHours;
+    private String googleMapsUri;
+    private String photoName;
     private String priceHint;
     private String photoUrl;
     private Boolean openNow;
@@ -76,6 +78,10 @@ public class PlaceResponse {
     public void setPhone(String phone) { this.phone = phone; }
     public String getOpeningHours() { return openingHours; }
     public void setOpeningHours(String openingHours) { this.openingHours = openingHours; }
+    public String getGoogleMapsUri() { return googleMapsUri; }
+    public void setGoogleMapsUri(String googleMapsUri) { this.googleMapsUri = googleMapsUri; }
+    public String getPhotoName() { return photoName; }
+    public void setPhotoName(String photoName) { this.photoName = photoName; }
 
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }

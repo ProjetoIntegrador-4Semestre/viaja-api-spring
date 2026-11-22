@@ -20,6 +20,8 @@ Os lugares usam um modelo comum para qualquer origem de dados. O catálogo demon
 
 O app usa o JWT devolvido no cabeçalho `Authorization` do login para acessar dados privados. Conta, lugares salvos, viagens, paradas e notas são vinculados ao usuário autenticado. A lista de paradas de uma viagem fica em `GET /trip-locals/trip/{tripId}`. Para atualizar o horário e a conclusão de uma parada, use `PUT /trip-locals/{tripId}/{localId}/schedule`, com `scheduledTime` no formato `HH:mm` e `completed` como booleano. Para limpar o horário, envie `null` em `scheduledTime` ou omita esse campo.
 
+O catálogo também oferece `GET /places/nearby?lat=...&lng=...&radius=...&type=...`. Resultados com foto informam `photoName`; a mídia correspondente fica em `GET /places/photos?name=...`, que resolve a foto sem enviar a chave do Google ao cliente.
+
 As rotas começam diretamente pelo nome do recurso. Coleções como cidades, viagens e lugares salvos usam HAL, com os itens em `_embedded`. A busca de lugares e a lista de paradas retornam listas JSON simples. Nos resultados da busca e no detalhe de um lugar, o preço é informado em centavos.
 
 ## Como rodar localmente
@@ -42,6 +44,18 @@ curl -i http://localhost:18080/auth/login \
 ```
 
 Use o valor completo `Bearer ...` retornado em `Authorization` para chamar as rotas privadas.
+
+## Google Places
+
+Ative a Places API (New) em um projeto Google Cloud com faturamento e configure uma chave exclusiva para o servidor, restrita à API e aos endereços IP da implantação. Não reutilize essa chave no Android.
+
+```sh
+export GOOGLE_MAPS_SERVER_API_KEY="sua-chave-de-servidor"
+export VIAJA_LOCALS_PROVIDER="google"
+./mvnw spring-boot:run
+```
+
+Sem essas variáveis, a API continua usando o catálogo demonstrativo. Text Search, Nearby Search, detalhes e fotos usam máscaras de campos explícitas; campos mais caros só devem ser adicionados quando a experiência realmente precisar deles.
 
 Para verificar o catálogo, o login e os fluxos de salvos, viagens e paradas, rode `python3 scripts/smoke_test.py` com uma instância local recém-iniciada. O script depende dos dados iniciais e cria e remove registros de demonstração. Use `--base-url` para apontar para outra instância de teste.
 
