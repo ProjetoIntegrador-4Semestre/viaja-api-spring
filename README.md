@@ -47,7 +47,7 @@ Use o valor completo `Bearer ...` retornado em `Authorization` para chamar as ro
 
 ## Google Places
 
-Ative a Places API (New) em um projeto Google Cloud com faturamento e configure uma chave exclusiva para o servidor, restrita à API e aos endereços IP da implantação. Não reutilize essa chave no Android.
+Ative Places API (New), Routes API e Geocoding API v4 em um projeto Google Cloud com faturamento e configure uma chave exclusiva para o servidor, restrita a essas APIs e aos endereços IP da implantação. Não reutilize essa chave no Android.
 
 ```sh
 export GOOGLE_MAPS_SERVER_API_KEY="sua-chave-de-servidor"
@@ -56,6 +56,8 @@ export VIAJA_LOCALS_PROVIDER="google"
 ```
 
 Sem essas variáveis, a API continua usando o catálogo demonstrativo. Text Search, Nearby Search, detalhes e fotos usam máscaras de campos explícitas; campos mais caros só devem ser adicionados quando a experiência realmente precisar deles.
+
+Rotas ficam em `POST /maps/routes`; geocodificação direta e reversa ficam em `GET /maps/geocode` e `GET /maps/reverse-geocode`. Esses contratos devolvem apenas os dados necessários ao app e mantêm a credencial do Google no servidor.
 
 Para verificar o catálogo, o login e os fluxos de salvos, viagens e paradas, rode `python3 scripts/smoke_test.py` com uma instância local recém-iniciada. O script depende dos dados iniciais e cria e remove registros de demonstração. Use `--base-url` para apontar para outra instância de teste.
 

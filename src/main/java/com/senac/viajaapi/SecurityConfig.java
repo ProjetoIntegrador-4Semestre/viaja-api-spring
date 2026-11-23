@@ -41,7 +41,7 @@ public class SecurityConfig {
                         .requestMatchers(org.springframework.http.HttpMethod.POST, "/billing/stripe/webhook").permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/billing/stripe/return").permitAll()
                         .requestMatchers("/auth/login", "/auth/signup").permitAll()
-                        .requestMatchers("/places/search", "/places/**", "/cities/**", "/interests/**", "/medias/**").permitAll()
+                        .requestMatchers("/places/search", "/places/**", "/maps/**", "/cities/**", "/interests/**", "/medias/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html", "/h2-console/**").permitAll()
                         .anyRequest().authenticated()
                 )
