@@ -12,8 +12,9 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 
-@Table(name = "locals")
+@Table(name = "locals", uniqueConstraints = @UniqueConstraint(columnNames = {"source", "source_id"}))
 @Entity
 public class Local {
 

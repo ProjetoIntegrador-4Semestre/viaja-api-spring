@@ -39,13 +39,15 @@ public class LocalController {
 
     private final LocalRepository repository;
     private final ProviderRouter providerRouter;
+    private final LocalImportService importService;
     private final LocalModelAssembler assembler;
     private final org.springframework.data.web.PagedResourcesAssembler<Local> pagedResourcesAssembler;
 
-    public LocalController(LocalRepository repository, ProviderRouter providerRouter, LocalModelAssembler assembler,
+    public LocalController(LocalRepository repository, ProviderRouter providerRouter, LocalImportService importService, LocalModelAssembler assembler,
             org.springframework.data.web.PagedResourcesAssembler<Local> pagedResourcesAssembler) {
         this.repository = repository;
         this.providerRouter = providerRouter;
+        this.importService = importService;
         this.assembler = assembler;
         this.pagedResourcesAssembler = pagedResourcesAssembler;
     }
@@ -76,6 +78,12 @@ public class LocalController {
         return providerRouter.resolvePhoto(name, maxWidthPx)
                 .map(uri -> ResponseEntity.status(HttpStatus.FOUND).location(uri).<Void>build())
                 .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @Operation(summary = "Importar lugar externo", description = "Cria ou reutiliza um lugar interno a partir do identificador de um provider.")
+    @PostMapping("/import")
+    public PlaceResponse importPlace(@RequestBody LocalImportRequest request) {
+        return importService.importPlace(request.id());
     }
 
     @Operation(summary = "Listar lugares", description = "Retorna lista paginada de lugares cadastrados no sistema. Use page, size e sort para controlar a paginacao e ordenacao.")

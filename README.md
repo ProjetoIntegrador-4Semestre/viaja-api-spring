@@ -22,6 +22,8 @@ O app usa o JWT devolvido no cabeçalho `Authorization` do login para acessar da
 
 O catálogo também oferece `GET /places/nearby?lat=...&lng=...&radius=...&type=...`. Resultados com foto informam `photoName`; a mídia correspondente fica em `GET /places/photos?name=...`, que resolve a foto sem enviar a chave do Google ao cliente.
 
+Quando uma pessoa salva um resultado externo ou o adiciona ao roteiro, o app chama `POST /places/import`. A operação é autenticada e idempotente por `source` e `sourceId`: ela reutiliza o lugar interno quando já existe, evitando duplicatas.
+
 As rotas começam diretamente pelo nome do recurso. Coleções como cidades, viagens e lugares salvos usam HAL, com os itens em `_embedded`. A busca de lugares e a lista de paradas retornam listas JSON simples. Nos resultados da busca e no detalhe de um lugar, o preço é informado em centavos.
 
 ## Como rodar localmente
