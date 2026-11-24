@@ -21,7 +21,7 @@ public class LocalResponseMapper {
                 local.getRating(),
                 local.getRatingCount(),
                 local.getPrice(),
-                null,
+                local.getPriceHint(),
                 null,
                 null,
                 new ArrayList<>()
@@ -30,6 +30,8 @@ public class LocalResponseMapper {
         response.setWebsite(local.getWebsite());
         response.setPhone(local.getPhone());
         response.setOpeningHours(local.getOpeningHours());
+        response.setGoogleMapsUri(local.getGoogleMapsUri());
+        response.setPhotoName(local.getPhotoName());
         return response;
     }
 }

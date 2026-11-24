@@ -51,6 +51,15 @@ public class Local {
 
     private String website;
 
+    @Column(name = "google_maps_uri")
+    private String googleMapsUri;
+
+    @Column(name = "photo_name")
+    private String photoName;
+
+    @Column(name = "price_hint")
+    private String priceHint;
+
     @Enumerated(EnumType.STRING)
     private LocalSource source;
 
@@ -117,6 +126,12 @@ public class Local {
     public void setPhone(String phone) { this.phone = phone; }
     public String getWebsite() { return website; }
     public void setWebsite(String website) { this.website = website; }
+    public String getGoogleMapsUri() { return googleMapsUri; }
+    public void setGoogleMapsUri(String googleMapsUri) { this.googleMapsUri = googleMapsUri; }
+    public String getPhotoName() { return photoName; }
+    public void setPhotoName(String photoName) { this.photoName = photoName; }
+    public String getPriceHint() { return priceHint; }
+    public void setPriceHint(String priceHint) { this.priceHint = priceHint; }
     public LocalSource getSource() { return source; }
     public void setSource(LocalSource source) { this.source = source; }
     public String getSourceId() { return sourceId; }

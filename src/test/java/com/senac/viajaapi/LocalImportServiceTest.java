@@ -29,6 +29,9 @@ class LocalImportServiceTest {
         Local existing = new Local(null, "museum", "Museum", null, null, null, null, null, null,
                 null, null, null, null, "google", "source-id", LocalDateTime.now(), LocalDateTime.now());
         existing.setId(12L);
+        existing.setGoogleMapsUri("https://maps.google.com/example");
+        existing.setPhotoName("places/source-id/photos/photo-id");
+        existing.setPriceHint("$$");
         when(providerRouter.getById("google:source-id")).thenReturn(Optional.of(external));
         when(repository.findBySourceAndSourceId(LocalSource.GOOGLE, "source-id")).thenReturn(Optional.of(existing));
 
@@ -38,5 +41,8 @@ class LocalImportServiceTest {
         assertThat(result.getId()).isEqualTo("12");
         assertThat(result.getSource()).isEqualTo("google");
         assertThat(result.getCategories()).isEqualTo(List.of("museum"));
+        assertThat(result.getGoogleMapsUri()).isEqualTo("https://maps.google.com/example");
+        assertThat(result.getPhotoName()).isEqualTo("places/source-id/photos/photo-id");
+        assertThat(result.getPriceHint()).isEqualTo("$$");
     }
 }

@@ -2,6 +2,7 @@ package com.senac.viajaapi;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.net.URI;
 import java.util.List;
 import java.util.Optional;
 
@@ -49,6 +50,36 @@ class ProviderRouterTest {
 
         assertThat(router.getById("1")).contains(mockPlace);
         assertThat(router.getById("google:abc")).contains(googlePlace);
+    }
+
+    @Test
+    void routesGooglePhotoResourcesIndependentlyFromDefaultProvider() {
+        LocalProvider mock = provider(LocalSource.MOCK, new PlaceResponse());
+        LocalProvider google = new LocalProvider() {
+            @Override
+            public LocalSource source() {
+                return LocalSource.GOOGLE;
+            }
+
+            @Override
+            public List<PlaceResponse> search(LocalSearchRequest request) {
+                return List.of();
+            }
+
+            @Override
+            public Optional<PlaceResponse> getById(String id) {
+                return Optional.empty();
+            }
+
+            @Override
+            public Optional<URI> resolvePhoto(String photoName, int maxWidthPx) {
+                return Optional.of(URI.create("https://example.com/photo"));
+            }
+        };
+        ProviderRouter router = new ProviderRouter(List.of(mock, google), "mock");
+
+        assertThat(router.resolvePhoto("places/abc/photos/def", 800))
+                .contains(URI.create("https://example.com/photo"));
     }
 
     private LocalProvider provider(LocalSource source, PlaceResponse place) {

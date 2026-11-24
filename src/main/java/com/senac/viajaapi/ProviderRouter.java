@@ -42,7 +42,9 @@ public class ProviderRouter {
     }
 
     public Optional<URI> resolvePhoto(String photoName, int maxWidthPx) {
-        return provider(defaultSource).resolvePhoto(photoName, maxWidthPx);
+        LocalSource source = photoName != null && photoName.startsWith("places/")
+                ? LocalSource.GOOGLE : defaultSource;
+        return provider(source).resolvePhoto(photoName, maxWidthPx);
     }
 
     public LocalProvider provider(LocalSource source) {

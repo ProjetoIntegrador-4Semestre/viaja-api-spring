@@ -48,6 +48,9 @@ public class LocalImportService {
         local.setDescription(place.getDescription());
         local.setPhone(place.getPhone());
         local.setWebsite(place.getWebsite());
+        local.setGoogleMapsUri(place.getGoogleMapsUri());
+        local.setPhotoName(place.getPhotoName());
+        local.setPriceHint(place.getPriceHint());
         local.setSource(source);
         local.setSourceId(sourceId);
         local.setCreatedAt(now);
