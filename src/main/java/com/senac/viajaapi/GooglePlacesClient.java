@@ -122,7 +122,7 @@ public class GooglePlacesClient {
     }
 
     private void requireConfiguration() {
-        if (apiKey == null || apiKey.isBlank()) throw new IllegalStateException("Google Places API key is not configured");
+        if (apiKey == null || apiKey.isBlank()) throw new MapsConfigurationException();
     }
 
     private ResponseStatusException unavailable(RestClientException exception) {

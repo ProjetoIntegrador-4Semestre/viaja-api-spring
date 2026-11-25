@@ -72,6 +72,6 @@ public class GoogleRoutesClient {
     }
 
     private void requireConfiguration() {
-        if (apiKey == null || apiKey.isBlank()) throw new IllegalStateException("Google Maps server API key is not configured");
+        if (apiKey == null || apiKey.isBlank()) throw new MapsConfigurationException();
     }
 }

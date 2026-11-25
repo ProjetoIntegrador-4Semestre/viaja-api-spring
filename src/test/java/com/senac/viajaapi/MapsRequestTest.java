@@ -28,4 +28,17 @@ class MapsRequestTest {
                 "FLY"
         )).isInstanceOf(IllegalArgumentException.class);
     }
+
+    @Test
+    void reportsMissingServerConfigurationBeforeCallingGoogle() {
+        GoogleRoutesClient client = new GoogleRoutesClient("", "https://routes.googleapis.com");
+        RouteRequest request = new RouteRequest(
+                new MapCoordinate(0, 0),
+                new MapCoordinate(1, 1),
+                "DRIVE"
+        );
+
+        assertThatThrownBy(() -> client.compute(request))
+                .isInstanceOf(MapsConfigurationException.class);
+    }
 }

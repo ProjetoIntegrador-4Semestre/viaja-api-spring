@@ -32,4 +32,10 @@ public class GlobalExceptionHandler {
     String badRequest(IllegalArgumentException ex) {
         return ex.getMessage();
     }
+
+    @ExceptionHandler(MapsConfigurationException.class)
+    @ResponseStatus(HttpStatus.SERVICE_UNAVAILABLE)
+    String mapsUnavailable(MapsConfigurationException ex) {
+        return ex.getMessage();
+    }
 }
