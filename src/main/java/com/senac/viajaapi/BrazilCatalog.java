@@ -46,7 +46,7 @@ public class BrazilCatalog implements CommandLineRunner {
                 if (places.existsByCityIdAndNameIgnoreCase(city.getId(), name)) continue;
                 places.save(new Local(city.getId(), "attraction", name, entry[3],
                         new BigDecimal(entry[4]), new BigDecimal(entry[5]), null, null, null,
-                        null, entry[6], null, null, "catalog", null, now, now));
+                        null, entry[6], null, null, "mock", null, now, now));
             }
         }
     }
