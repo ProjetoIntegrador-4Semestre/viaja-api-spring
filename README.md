@@ -13,6 +13,7 @@ Os lugares usam um modelo comum para qualquer origem de dados. O catálogo demon
 | Cadastro e login | `POST /auth/signup` e `POST /auth/login` |
 | Conta | `/users/{id}` |
 | Cidades e lugares | `GET /cities`, `GET /places/search?q=...` e `GET /places/{id}` |
+| Google Maps pelo servidor | `GET /places/nearby`, `/places/photos`, `/maps/geocode`, `/maps/reverse-geocode` e `POST /maps/routes` |
 | Lugares salvos | `/users/{userId}/saved-locals` |
 | Viagens e notas | `/trips` e `/trips/{tripId}/notes` |
 | Paradas do roteiro | `/trip-locals` |
@@ -57,7 +58,7 @@ export VIAJA_LOCALS_PROVIDER="google"
 ./mvnw spring-boot:run
 ```
 
-Sem essas variáveis, a API continua usando o catálogo demonstrativo. Text Search, Nearby Search, detalhes e fotos usam máscaras de campos explícitas; campos mais caros só devem ser adicionados quando a experiência realmente precisar deles.
+Sem `VIAJA_LOCALS_PROVIDER`, a API continua usando o catálogo demonstrativo. As rotas que dependem diretamente do Google respondem com HTTP 503 enquanto a chave de servidor não estiver configurada. Text Search, Nearby Search, detalhes e fotos usam máscaras de campos explícitas; campos mais caros só devem ser adicionados quando a experiência realmente precisar deles.
 
 Rotas ficam em `POST /maps/routes`; geocodificação direta e reversa ficam em `GET /maps/geocode` e `GET /maps/reverse-geocode`. Esses contratos devolvem apenas os dados necessários ao app e mantêm a credencial do Google no servidor.
 
